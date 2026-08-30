@@ -3,12 +3,34 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
-    "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test test/**/*.test.ts"
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "clean": "node --eval \"import('node:fs').then(({ rmSync }) => { rmSync('coverage', { recursive: true, force: true }); rmSync('dist', { recursive: true, force: true }); })\"",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "pnpm lint --fix",
+    "format:check": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+    "check": "pnpm quality"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.0",
     "@types/node": "^24.0.0",
-    "typescript": "^5.9.0"
+    "@vitest/coverage-v8": "^4.0.0",
+    "eslint": "^10.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.0.0",
+    "vite": "^8.0.0",
+    "vitest": "^4.0.0"
   }
 }

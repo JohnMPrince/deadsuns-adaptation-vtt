@@ -41,10 +41,7 @@ export interface EncounterDefinition extends ContentDefinition<"encounter"> {
 }
 
 export type AdaptationContentDefinition =
-  | ActorDefinition
-  | SceneDefinition
-  | JournalDefinition
-  | EncounterDefinition;
+  ActorDefinition | SceneDefinition | JournalDefinition | EncounterDefinition;
 
 export interface AdaptationConfig {
   readonly id: string;

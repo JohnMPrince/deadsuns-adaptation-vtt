@@ -17,6 +17,14 @@ The first increment establishes only the domain boundary. See
 
 ```sh
 pnpm install
-pnpm check
+pnpm quality
+pnpm build
 pnpm test
 ```
+
+Other useful commands include `pnpm dev` for a watch build, `pnpm lint:fix` and
+`pnpm format:write` for safe automated fixes, and `pnpm test:coverage` for an
+HTML and text coverage report.
+
+Changes to `main` are made through pull requests. The repository's required
+`Quality and build` check must pass before a pull request can be merged.
