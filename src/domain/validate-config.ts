@@ -1,7 +1,6 @@
 import type {
   AdaptationConfig,
   AdaptationContentDefinition,
-  ContentKind,
   ContentReference,
 } from "./model.ts";
 
@@ -10,7 +9,9 @@ export interface ValidationIssue {
   readonly message: string;
 }
 
-export function validateConfig(config: AdaptationConfig): readonly ValidationIssue[] {
+export function validateConfig(
+  config: AdaptationConfig,
+): readonly ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const definitions = new Map<string, AdaptationContentDefinition>();
 
@@ -18,7 +19,7 @@ export function validateConfig(config: AdaptationConfig): readonly ValidationIss
     const existing = definitions.get(definition.key);
     if (existing) {
       issues.push({
-        path: `content[${index}].key`,
+        path: `content[${String(index)}].key`,
         message: `Duplicate content key "${definition.key}" (already used by ${existing.kind}).`,
       });
     } else {
@@ -31,12 +32,12 @@ export function validateConfig(config: AdaptationConfig): readonly ValidationIss
       const target = definitions.get(reference.key);
       if (!target) {
         issues.push({
-          path: `content[${index}].${path}`,
+          path: `content[${String(index)}].${path}`,
           message: `Unknown ${reference.kind} reference "${reference.key}".`,
         });
       } else if (target.kind !== reference.kind) {
         issues.push({
-          path: `content[${index}].${path}`,
+          path: `content[${String(index)}].${path}`,
           message: `Reference "${reference.key}" expects ${reference.kind}, but targets ${target.kind}.`,
         });
       }
@@ -46,27 +47,37 @@ export function validateConfig(config: AdaptationConfig): readonly ValidationIss
   return issues;
 }
 
-type LocatedReference = readonly [path: string, reference: ContentReference<ContentKind>];
+type LocatedReference = readonly [path: string, reference: ContentReference];
 
-function referencesFor(definition: AdaptationContentDefinition): LocatedReference[] {
+function referencesFor(
+  definition: AdaptationContentDefinition,
+): LocatedReference[] {
   switch (definition.kind) {
     case "actor":
     case "journal":
       return [];
     case "scene":
       return [
-        ...(definition.actors ?? []).map((reference, index) =>
-          [`actors[${index}]`, reference] as const),
-        ...(definition.journals ?? []).map((reference, index) =>
-          [`journals[${index}]`, reference] as const),
+        ...(definition.actors ?? []).map(
+          (reference, index) =>
+            [`actors[${String(index)}]`, reference] as const,
+        ),
+        ...(definition.journals ?? []).map(
+          (reference, index) =>
+            [`journals[${String(index)}]`, reference] as const,
+        ),
       ];
     case "encounter":
       return [
         ["scene", definition.scene],
-        ...definition.actors.map((reference, index) =>
-          [`actors[${index}]`, reference] as const),
-        ...(definition.journals ?? []).map((reference, index) =>
-          [`journals[${index}]`, reference] as const),
+        ...definition.actors.map(
+          (reference, index) =>
+            [`actors[${String(index)}]`, reference] as const,
+        ),
+        ...(definition.journals ?? []).map(
+          (reference, index) =>
+            [`journals[${String(index)}]`, reference] as const,
+        ),
       ];
   }
 }
