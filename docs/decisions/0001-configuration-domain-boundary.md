@@ -4,10 +4,10 @@ Status: accepted as the initial architectural direction
 
 ## Context
 
-The adaptation will contain many related actors, scenes, journals, encounters, and
-assets. Foundry document schemas are persistence and UI concerns; using those
-schemas as authoring configuration would couple the content to Foundry v14 and
-make validation, migration, and testing unnecessarily difficult.
+The adaptation will contain many related actors, scenes, journals, encounters,
+and assets. Foundry document schemas are persistence and UI concerns; using
+those schemas as authoring configuration would couple the content to Foundry v14
+and make validation, migration, and testing unnecessarily difficult.
 
 ## Decision
 
@@ -31,9 +31,9 @@ in later mapping policy unless they express an actual adaptation concept.
 
 ## Initial scope
 
-The first domain slice models actors, scenes, journals, and encounters. It checks
-stable-key format, uniqueness, and typed references. Additional content kinds
-should be added when a concrete import use case requires them.
+The first domain slice models actors, scenes, journals, and encounters. It
+checks stable-key format, uniqueness, and typed references. Additional content
+kinds should be added when a concrete import use case requires them.
 
 ## Consequences
 
