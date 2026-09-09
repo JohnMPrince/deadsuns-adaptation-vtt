@@ -1,8 +1,13 @@
+import {
+  artifactCodeDefinitions,
+  type ArtifactCode,
+} from "./artifact-catalog.ts";
 import type {
+  AdaptationArtifactDefinition,
   AdaptationConfig,
-  AdaptationContentDefinition,
-  ContentReference,
+  ArtifactReference,
 } from "./model.ts";
+import { parseTaxonomyId, type TaxonomyId } from "./taxonomy-id.ts";
 
 export interface ValidationIssue {
   readonly path: string;
@@ -13,32 +18,69 @@ export function validateConfig(
   config: AdaptationConfig,
 ): readonly ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  const definitions = new Map<string, AdaptationContentDefinition>();
+  const artifacts = new Map<string, AdaptationArtifactDefinition>();
 
-  for (const [index, definition] of config.content.entries()) {
-    const existing = definitions.get(definition.key);
+  for (const [index, artifact] of config.artifacts.entries()) {
+    const path = `artifacts[${String(index)}]`;
+    let parsed;
+
+    try {
+      parsed = parseTaxonomyId(artifact.taxonomyId);
+    } catch (error) {
+      issues.push({ path: `${path}.taxonomyId`, message: errorMessage(error) });
+      continue;
+    }
+
+    if (parsed.campaign !== config.campaign) {
+      issues.push({
+        path: `${path}.taxonomyId`,
+        message: `Taxonomy campaign ${parsed.campaign} does not match configuration campaign ${config.campaign}.`,
+      });
+    }
+
+    const expectedKind = artifactCodeDefinitions[parsed.artifactCode].kind;
+    if (artifact.kind !== expectedKind) {
+      issues.push({
+        path: `${path}.kind`,
+        message: `Artifact code ${parsed.artifactCode} requires kind ${expectedKind}, not ${artifact.kind}.`,
+      });
+    }
+
+    const existing = artifacts.get(artifact.taxonomyId);
     if (existing) {
       issues.push({
-        path: `content[${String(index)}].key`,
-        message: `Duplicate content key "${definition.key}" (already used by ${existing.kind}).`,
+        path: `${path}.taxonomyId`,
+        message: `Duplicate taxonomy ID "${artifact.taxonomyId}" (already used by ${existing.kind}).`,
       });
     } else {
-      definitions.set(definition.key, definition);
+      artifacts.set(artifact.taxonomyId, artifact);
     }
   }
 
-  for (const [index, definition] of config.content.entries()) {
-    for (const [path, reference] of referencesFor(definition)) {
-      const target = definitions.get(reference.key);
+  for (const [index, artifact] of config.artifacts.entries()) {
+    for (const reference of referencesFor(artifact)) {
+      const target = artifacts.get(reference.taxonomyId);
+      const path = `artifacts[${String(index)}].${reference.path}`;
+
       if (!target) {
         issues.push({
-          path: `content[${String(index)}].${path}`,
-          message: `Unknown ${reference.kind} reference "${reference.key}".`,
+          path,
+          message: `Unknown artifact reference "${reference.taxonomyId}".`,
         });
-      } else if (target.kind !== reference.kind) {
+        continue;
+      }
+
+      let targetCode: ArtifactCode;
+      try {
+        targetCode = parseTaxonomyId(target.taxonomyId).artifactCode;
+      } catch {
+        continue;
+      }
+
+      if (!reference.expectedCodes.includes(targetCode)) {
         issues.push({
-          path: `content[${String(index)}].${path}`,
-          message: `Reference "${reference.key}" expects ${reference.kind}, but targets ${target.kind}.`,
+          path,
+          message: `Reference "${reference.taxonomyId}" expects ${reference.expectedCodes.join(" or ")}, but targets ${targetCode}.`,
         });
       }
     }
@@ -47,37 +89,55 @@ export function validateConfig(
   return issues;
 }
 
-type LocatedReference = readonly [path: string, reference: ContentReference];
+interface LocatedReference {
+  readonly path: string;
+  readonly taxonomyId: TaxonomyId;
+  readonly expectedCodes: readonly ArtifactCode[];
+}
 
 function referencesFor(
-  definition: AdaptationContentDefinition,
+  artifact: AdaptationArtifactDefinition,
 ): LocatedReference[] {
-  switch (definition.kind) {
+  switch (artifact.kind) {
     case "actor":
     case "journal":
+    case "handout":
+    case "item":
+    case "rollTable":
+    case "playlist":
+    case "macro":
       return [];
+    case "journalPage":
+      return [locatedReference("journal", artifact.journal, ["JRN"])];
+    case "playlistSound":
+      return [locatedReference("playlist", artifact.playlist, ["PLY"])];
     case "scene":
       return [
-        ...(definition.actors ?? []).map(
-          (reference, index) =>
-            [`actors[${String(index)}]`, reference] as const,
+        ...(artifact.actors ?? []).map((reference, index) =>
+          locatedReference(`actors[${String(index)}]`, reference, [
+            "NPC",
+            "AA",
+            "SA",
+          ]),
         ),
-        ...(definition.journals ?? []).map(
-          (reference, index) =>
-            [`journals[${String(index)}]`, reference] as const,
-        ),
-      ];
-    case "encounter":
-      return [
-        ["scene", definition.scene],
-        ...definition.actors.map(
-          (reference, index) =>
-            [`actors[${String(index)}]`, reference] as const,
-        ),
-        ...(definition.journals ?? []).map(
-          (reference, index) =>
-            [`journals[${String(index)}]`, reference] as const,
+        ...(artifact.journals ?? []).map((reference, index) =>
+          locatedReference(`journals[${String(index)}]`, reference, [
+            "JRN",
+            "HND",
+          ]),
         ),
       ];
   }
+}
+
+function locatedReference(
+  path: string,
+  reference: ArtifactReference,
+  expectedCodes: readonly ArtifactCode[],
+): LocatedReference {
+  return { path, taxonomyId: reference.taxonomyId, expectedCodes };
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

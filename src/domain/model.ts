@@ -1,50 +1,78 @@
-export const contentKinds = ["actor", "scene", "journal", "encounter"] as const;
+import type { ArtifactCode, ArtifactKind } from "./artifact-catalog.ts";
+import type { TaxonomyId } from "./taxonomy-id.ts";
 
-export type ContentKind = (typeof contentKinds)[number];
-export type ContentKey = string & { readonly __contentKey: unique symbol };
+export type SceneArtifactCode = "CIN" | "BAT" | "REG" | "SOC";
+export type ActorArtifactCode = "NPC" | "AA" | "SA";
 
-export interface ContentReference<K extends ContentKind = ContentKind> {
-  readonly kind: K;
-  readonly key: ContentKey;
+export interface ArtifactReference<C extends ArtifactCode = ArtifactCode> {
+  readonly taxonomyId: TaxonomyId<C>;
 }
 
-interface ContentDefinition<K extends ContentKind> {
+export interface ArtifactMetadata {
+  readonly containerPath?: string;
+  readonly chapter?: string;
+  readonly part?: string;
+  readonly dataset?: string;
+}
+
+interface ArtifactDefinition<K extends ArtifactKind, C extends ArtifactCode> {
   readonly kind: K;
-  readonly key: ContentKey;
+  readonly taxonomyId: TaxonomyId<C>;
   readonly name: string;
+  readonly metadata?: ArtifactMetadata;
   readonly tags?: readonly string[];
 }
 
-export interface ActorDefinition extends ContentDefinition<"actor"> {
-  readonly role?: "creature" | "npc" | "starship";
-}
+export type ActorDefinition = ArtifactDefinition<"actor", ActorArtifactCode>;
 
-export interface SceneDefinition extends ContentDefinition<"scene"> {
+export interface SceneDefinition extends ArtifactDefinition<
+  "scene",
+  SceneArtifactCode
+> {
   readonly background?: string;
-  readonly actors?: readonly ContentReference<"actor">[];
-  readonly journals?: readonly ContentReference<"journal">[];
+  readonly actors?: readonly ArtifactReference<ActorArtifactCode>[];
+  readonly journals?: readonly ArtifactReference<"JRN" | "HND">[];
 }
 
-export interface JournalDefinition extends ContentDefinition<"journal"> {
-  readonly pages: readonly JournalPageDefinition[];
-}
+export type JournalDefinition = ArtifactDefinition<"journal", "JRN">;
 
-export interface JournalPageDefinition {
-  readonly name: string;
+export interface JournalPageDefinition extends ArtifactDefinition<
+  "journalPage",
+  "JPG"
+> {
+  readonly journal: ArtifactReference<"JRN">;
   readonly markdown: string;
 }
 
-export interface EncounterDefinition extends ContentDefinition<"encounter"> {
-  readonly scene: ContentReference<"scene">;
-  readonly actors: readonly ContentReference<"actor">[];
-  readonly journals?: readonly ContentReference<"journal">[];
+export type HandoutDefinition = ArtifactDefinition<"handout", "HND">;
+export type ItemDefinition = ArtifactDefinition<"item", "ITM">;
+export type RollTableDefinition = ArtifactDefinition<"rollTable", "TBL">;
+export type PlaylistDefinition = ArtifactDefinition<"playlist", "PLY">;
+
+export interface PlaylistSoundDefinition extends ArtifactDefinition<
+  "playlistSound",
+  "AUD"
+> {
+  readonly playlist: ArtifactReference<"PLY">;
+  readonly source: string;
 }
 
-export type AdaptationContentDefinition =
-  ActorDefinition | SceneDefinition | JournalDefinition | EncounterDefinition;
+export type MacroDefinition = ArtifactDefinition<"macro", "MAC">;
+
+export type AdaptationArtifactDefinition =
+  | ActorDefinition
+  | SceneDefinition
+  | JournalDefinition
+  | JournalPageDefinition
+  | HandoutDefinition
+  | ItemDefinition
+  | RollTableDefinition
+  | PlaylistDefinition
+  | PlaylistSoundDefinition
+  | MacroDefinition;
 
 export interface AdaptationConfig {
-  readonly id: string;
+  readonly campaign: string;
   readonly title: string;
-  readonly content: readonly AdaptationContentDefinition[];
+  readonly artifacts: readonly AdaptationArtifactDefinition[];
 }
