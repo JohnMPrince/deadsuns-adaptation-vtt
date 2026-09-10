@@ -9,6 +9,7 @@ export interface ArtifactReference<C extends ArtifactCode = ArtifactCode> {
 }
 
 export interface ArtifactMetadata {
+  /** Legacy display path; use containerId for validated placement. */
   readonly containerPath?: string;
   readonly chapter?: string;
   readonly part?: string;
@@ -16,6 +17,7 @@ export interface ArtifactMetadata {
 }
 
 interface ArtifactDefinition<K extends ArtifactKind, C extends ArtifactCode> {
+  readonly containerId?: string;
   readonly kind: K;
   readonly taxonomyId: TaxonomyId<C>;
   readonly name: string;
@@ -72,7 +74,15 @@ export type AdaptationArtifactDefinition =
   | MacroDefinition;
 
 export interface AdaptationConfig {
+  readonly containers?: readonly ContainerDefinition[];
   readonly campaign: string;
   readonly title: string;
   readonly artifacts: readonly AdaptationArtifactDefinition[];
+}
+
+/** Logical organization, independent of Foundry folders and taxonomy indices. */
+export interface ContainerDefinition {
+  readonly id: string;
+  readonly name: string;
+  readonly parentId?: string;
 }

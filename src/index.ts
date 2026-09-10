@@ -10,3 +10,4 @@ export type {
   ImportPlan,
   ImportPlanEntry,
 } from "./import/plan-import.ts";
+export { deadSunsContainers } from "./config/dead-suns-containers.ts";

@@ -117,3 +117,42 @@ HTML and text coverage report.
 
 Changes to `main` are made through pull requests. The repository's required
 `Quality and build` check must pass before a pull request can be merged.
+
+## Container configuration
+
+Declare logical containers separately from artifacts, then reference their
+stable IDs. Declaration order does not need to follow parent order:
+
+```ts
+const containers = [
+  { id: "campaign", name: "Dead Suns Adaptation" },
+  { id: "chapter-one", name: "Chapter One", parentId: "campaign" },
+  { id: "part-one", name: "Part One", parentId: "chapter-one" },
+];
+// Add `containers` to AdaptationConfig and `containerId: "part-one"`
+// to a top-level artifact. Omit containerId to leave it unassigned.
+```
+
+Use `validateConfig(config)` before import and
+`resolveContainerHierarchy(config)` to obtain parent-first containers with ID
+ancestry and display path segments. Journal pages and playlist sounds use their
+owning document's placement. Legacy `metadata.containerPath` remains supported;
+use only one placement mechanism per artifact. Container labels and parents may
+change without changing IDs. Foundry folder creation and reconciliation are a
+future mapping concern; see
+[ADR 0004](docs/decisions/0004-container-hierarchy.md).
+
+The exported `deadSunsContainers` configuration supplies the initial DAC-19
+tree:
+
+```text
+Dead Suns Adaptation/
+  Miscellaneous
+  Locations
+  Elements
+  Chapter 1
+```
+
+Set `containers: deadSunsContainers` in an adaptation configuration. Its child
+IDs are `miscellaneous`, `locations`, `elements`, and `chapter-1`; the root ID
+is `dead-suns-adaptation`. Extend the list as more content is defined.

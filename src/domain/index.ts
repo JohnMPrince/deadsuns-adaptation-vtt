@@ -13,6 +13,7 @@ export type {
   ActorDefinition,
   AdaptationArtifactDefinition,
   AdaptationConfig,
+  ContainerDefinition,
   ArtifactMetadata,
   ArtifactReference,
   HandoutDefinition,
@@ -34,3 +35,5 @@ export type {
 } from "./taxonomy-id.ts";
 export { validateConfig } from "./validate-config.ts";
 export type { ValidationIssue } from "./validate-config.ts";
+export { resolveContainerHierarchy } from "./container-hierarchy.ts";
+export type { ResolvedContainer } from "./container-hierarchy.ts";
