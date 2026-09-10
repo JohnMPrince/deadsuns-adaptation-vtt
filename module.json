@@ -4,6 +4,6 @@
   "description": "Configuration-driven adventure import foundation. This development skeleton exposes validation and planning; it does not yet import documents.",
   "version": "0.0.0",
   "compatibility": { "minimum": "14", "maximum": "14" },
-  "esmodules": ["deadsuns-adaptation-vtt.js"],
+  "esmodules": ["dist/deadsuns-adaptation-vtt.js"],
   "url": "https://github.com/JohnMPrince/deadsuns-adaptation-vtt"
 }

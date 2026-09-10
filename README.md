@@ -19,11 +19,23 @@ Architecture decisions are recorded in [`docs/decisions`](docs/decisions).
 
 ## Development module installation (DAC-12)
 
-Run `pnpm build`. The contents of `dist/` are the module package: `module.json`,
-the startup JavaScript bundle, and its source map. Copy those contents into
-`<Foundry User Data>/Data/modules/deadsuns-adaptation-vtt/`, with `module.json`
-directly inside that folder. Restart Foundry, open a test world, and enable
-**Dead Suns Adaptation Importer** in Manage Modules.
+Run `pnpm build`. Copy the root `module.json` and the entire `dist/` folder into
+`<Foundry User Data>/Data/modules/deadsuns-adaptation-vtt/`. Preserve this
+layout:
+
+```text
+deadsuns-adaptation-vtt/
+  module.json
+  dist/
+    deadsuns-adaptation-vtt.js
+    deadsuns-adaptation-vtt.js.map
+```
+
+The manifest loads `dist/deadsuns-adaptation-vtt.js` relative to the module
+root. You can also use the built repository itself as the module folder. Do not
+move the manifest into `public/` or flatten the contents of `dist/`. Restart
+Foundry, open a test world, and enable **Dead Suns Adaptation Importer** in
+Manage Modules.
 
 This skeleton targets Foundry generation 14. The manifest deliberately omits
 `compatibility.verified` until an actual Foundry smoke test is recorded. No
@@ -59,8 +71,9 @@ compatibility.
 `src/foundry/entry.ts` is the browser startup entry. Its lifecycle adapter
 registers `init` and `ready` hooks and attaches the read-only API above during
 `init`. `src/index.ts` remains the host-independent library entry for
-developers. The build copies `public/module.json` into `dist/` using Vite's
-public directory. Keep its development version aligned with `package.json`.
+developers. The manifest stays at the repository/module root; Vite builds only
+the JavaScript and source map into `dist/`, with public-directory copying
+disabled. Keep the manifest development version aligned with `package.json`.
 
 DAC-17 adds the import trigger, DAC-18 adds sample mapping and writes, DAC-19
 defines container hierarchy, and DAC-20 expands diagnostics. Those capabilities
