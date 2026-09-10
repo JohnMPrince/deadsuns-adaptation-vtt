@@ -37,10 +37,10 @@ move the manifest into `public/` or flatten the contents of `dist/`. Restart
 Foundry, open a test world, and enable **Dead Suns Adaptation Importer** in
 Manage Modules.
 
-This skeleton targets Foundry generation 14. The manifest deliberately omits
-`compatibility.verified` until an actual Foundry smoke test is recorded. No
-release download or manifest URL is advertised yet; installation is manual. The
-skeleton has no system-specific document mapping or system dependency.
+This skeleton targets Foundry generation 14 and has been smoke-tested on Foundry
+14.367 with SF1E (`sfrpg`) 14.0.2. No release download or manifest URL is
+advertised yet; installation is manual. The skeleton has no system-specific
+document mapping or system dependency.
 
 ### Manual Foundry smoke test
 
@@ -65,6 +65,24 @@ skeleton has no system-specific document mapping or system dependency.
 Record the Foundry build, game system/version, and outcome when performing this
 test. Automated tests use a host double and do not establish runtime
 compatibility.
+
+### Recorded local validation
+
+The user supplied screenshots confirming these results in a local Foundry 14.367
+world running SF1E (`sfrpg`) 14.0.2:
+
+- Module enabled; both `Initialized` and `Ready` messages appeared.
+- The API exposed `taxonomyId`, `validateConfig`, and `planImport`.
+- An example playlist (`EX-PLY-08.14.01.00`) validated with no issues.
+- Planning returned one create and zero updates, unchanged entries, or
+  conflicts.
+- Changing the configuration campaign to `OTHER` produced a campaign mismatch.
+- The Playlists sidebar remained empty: planning did not create the playlist.
+
+The initial installed bundle was stale; rebuilding resolved the missing startup
+code. SF1E deprecation warnings were observed separately. This verifies the
+skeleton's startup and planning API, not document import or system validation.
+The optional disable-and-reload check has not been reported.
 
 ### Implemented boundary
 
