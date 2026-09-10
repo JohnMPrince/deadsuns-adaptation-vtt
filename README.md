@@ -17,6 +17,60 @@ Foundry document is changed.
 
 Architecture decisions are recorded in [`docs/decisions`](docs/decisions).
 
+## Development module installation (DAC-12)
+
+Run `pnpm build`. The contents of `dist/` are the module package: `module.json`,
+the startup JavaScript bundle, and its source map. Copy those contents into
+`<Foundry User Data>/Data/modules/deadsuns-adaptation-vtt/`, with `module.json`
+directly inside that folder. Restart Foundry, open a test world, and enable
+**Dead Suns Adaptation Importer** in Manage Modules.
+
+This skeleton targets Foundry generation 14. The manifest deliberately omits
+`compatibility.verified` until an actual Foundry smoke test is recorded. No
+release download or manifest URL is advertised yet; installation is manual. The
+skeleton has no system-specific document mapping or system dependency.
+
+### Manual Foundry smoke test
+
+1. Confirm the module appears in Manage Modules and can be enabled in
+   Foundry 14.
+2. Reload the world and check the browser console for one `Initialized` and one
+   `Ready (validation and planning only)` message from
+   `deadsuns-adaptation-vtt`.
+3. Confirm there are no module startup errors or failed module file requests.
+4. In the browser console, run:
+
+   ```js
+   const api = game.modules.get("deadsuns-adaptation-vtt").api;
+   const config = { campaign: "EX", title: "Example", artifacts: [] };
+   api.validateConfig(config); // []
+   await api.planImport(config, []); // empty entries; all counts zero
+   ```
+
+5. Confirm loading and planning create no documents. Disable the module and
+   reload; its startup messages should no longer appear.
+
+Record the Foundry build, game system/version, and outcome when performing this
+test. Automated tests use a host double and do not establish runtime
+compatibility.
+
+### Implemented boundary
+
+`src/foundry/entry.ts` is the browser startup entry. Its lifecycle adapter
+registers `init` and `ready` hooks and attaches the read-only API above during
+`init`. `src/index.ts` remains the host-independent library entry for
+developers. The build copies `public/module.json` into `dist/` using Vite's
+public directory. Keep its development version aligned with `package.json`.
+
+DAC-17 adds the import trigger, DAC-18 adds sample mapping and writes, DAC-19
+defines container hierarchy, and DAC-20 expands diagnostics. Those capabilities
+are not implemented by this skeleton.
+
+The manifest and lifecycle follow Foundry's
+[module development guide](https://foundryvtt.com/article/module-development/)
+and
+[v14 init hook](https://foundryvtt.com/api/v14/functions/hookEvents.init.html).
+
 ## Development
 
 ```sh
