@@ -1,6 +1,7 @@
 # ADR 0001: Separate adaptation content from Foundry documents
 
-Status: accepted as the initial architectural direction
+Status: accepted as the initial architectural direction; identity details
+superseded by ADR 0003
 
 ## Context
 

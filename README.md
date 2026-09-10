@@ -10,8 +10,12 @@ The implementation is split into three boundaries:
 2. a Foundry-independent domain model validates and relates that content; and
 3. Foundry mappers and importers create or update platform documents.
 
-The first increment establishes only the domain boundary. See
-[`docs/decisions/0001-configuration-domain-boundary.md`](docs/decisions/0001-configuration-domain-boundary.md).
+The domain uses adaptation taxonomy IDs such as `DS-JPG-08.03.01.01` as the
+canonical identity for generated artifacts. It validates the full supported
+artifact-code catalogue and produces a non-mutating import plan before any
+Foundry document is changed.
+
+Architecture decisions are recorded in [`docs/decisions`](docs/decisions).
 
 ## Development
 
