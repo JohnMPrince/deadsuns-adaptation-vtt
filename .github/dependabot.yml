@@ -5,6 +5,12 @@ updates:
     schedule:
       interval: weekly
     ignore:
+      - dependency-name: vitest
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@vitest/coverage-v8"
+        update-types:
+          - version-update:semver-major
       - dependency-name: typescript
         update-types:
           - version-update:semver-major
