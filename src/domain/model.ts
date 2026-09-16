@@ -9,6 +9,7 @@ export interface ArtifactReference<C extends ArtifactCode = ArtifactCode> {
 }
 
 export interface ArtifactMetadata {
+  /** Slash-separated logical path, scoped to the artifact category. */
   readonly containerPath?: string;
   readonly chapter?: string;
   readonly part?: string;

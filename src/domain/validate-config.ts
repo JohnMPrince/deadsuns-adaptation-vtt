@@ -2,6 +2,7 @@ import {
   artifactCodeDefinitions,
   type ArtifactCode,
 } from "./artifact-catalog.ts";
+import { validateContainers } from "./container-hierarchy.ts";
 import type {
   AdaptationArtifactDefinition,
   AdaptationConfig,
@@ -17,7 +18,7 @@ export interface ValidationIssue {
 export function validateConfig(
   config: AdaptationConfig,
 ): readonly ValidationIssue[] {
-  const issues: ValidationIssue[] = [];
+  const issues: ValidationIssue[] = validateContainers(config);
   const artifacts = new Map<string, AdaptationArtifactDefinition>();
 
   for (const [index, artifact] of config.artifacts.entries()) {

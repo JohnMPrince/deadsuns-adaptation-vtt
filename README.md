@@ -117,3 +117,35 @@ HTML and text coverage report.
 
 Changes to `main` are made through pull requests. The repository's required
 `Quality and build` check must pass before a pull request can be merged.
+
+## Container configuration
+
+Each artifact's `metadata.containerPath` is the source of its logical placement:
+
+```ts
+metadata: {
+  containerPath: "Dead Suns Adaptation/Chapter 1/Part 1";
+}
+```
+
+Call `validateConfig(config)` before import. `resolveContainerHierarchy(config)`
+returns the desired containers, including all parents, in parent-first order.
+Identity is the pair `(category, path)`: Scenes at the same path share
+containers, while Playlists at that path form a separate tree. Scene and Actor
+subtypes share their respective categories. No container declarations or
+taxonomy IDs are needed.
+
+Paths are case-sensitive slash-separated names. A single trailing slash is
+accepted and removed for resolution. Empty names, surrounding whitespace, dot
+segments, backslashes, and control characters are rejected. Omit the field for
+unassigned content. There is no domain depth limit. Journal pages and playlist
+sounds inherit their owner's placement; an explicit path must match the owner's.
+
+`deadSunsContainerPaths` exports suggested root, Miscellaneous, Locations,
+Elements, and Chapter 1 paths beneath Dead Suns Adaptation. Only paths actually
+referenced by artifacts (and their parents) become desired containers.
+
+The future importer must create missing containers in each mapped document
+category and reconcile existing ones. This resolver does not write to Foundry.
+Handouts retain a separate logical category pending a concrete document mapping.
+See [ADR 0004](docs/decisions/0004-container-hierarchy.md).

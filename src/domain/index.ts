@@ -34,3 +34,11 @@ export type {
 } from "./taxonomy-id.ts";
 export { validateConfig } from "./validate-config.ts";
 export type { ValidationIssue } from "./validate-config.ts";
+export {
+  parseContainerPath,
+  resolveContainerHierarchy,
+} from "./container-hierarchy.ts";
+export type {
+  ContainerCategory,
+  ResolvedContainer,
+} from "./container-hierarchy.ts";
