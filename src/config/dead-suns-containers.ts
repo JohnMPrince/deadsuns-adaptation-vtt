@@ -1,14 +1,8 @@
-import type { ContainerDefinition } from "../domain/model.ts";
-
-/** Initial DAC-19 hierarchy; extend through adaptation configuration. */
-export const deadSunsContainers = [
-  { id: "dead-suns-adaptation", name: "Dead Suns Adaptation" },
-  {
-    id: "miscellaneous",
-    name: "Miscellaneous",
-    parentId: "dead-suns-adaptation",
-  },
-  { id: "locations", name: "Locations", parentId: "dead-suns-adaptation" },
-  { id: "elements", name: "Elements", parentId: "dead-suns-adaptation" },
-  { id: "chapter-1", name: "Chapter 1", parentId: "dead-suns-adaptation" },
-] as const satisfies readonly ContainerDefinition[];
+/** Suggested authoring paths; each artifact chooses its own category and path. */
+export const deadSunsContainerPaths = {
+  root: "Dead Suns Adaptation",
+  miscellaneous: "Dead Suns Adaptation/Miscellaneous",
+  locations: "Dead Suns Adaptation/Locations",
+  elements: "Dead Suns Adaptation/Elements",
+  chapter1: "Dead Suns Adaptation/Chapter 1",
+} as const;

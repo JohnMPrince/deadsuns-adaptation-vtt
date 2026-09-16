@@ -120,39 +120,32 @@ Changes to `main` are made through pull requests. The repository's required
 
 ## Container configuration
 
-Declare logical containers separately from artifacts, then reference their
-stable IDs. Declaration order does not need to follow parent order:
+Each artifact's `metadata.containerPath` is the source of its logical placement:
 
 ```ts
-const containers = [
-  { id: "campaign", name: "Dead Suns Adaptation" },
-  { id: "chapter-one", name: "Chapter One", parentId: "campaign" },
-  { id: "part-one", name: "Part One", parentId: "chapter-one" },
-];
-// Add `containers` to AdaptationConfig and `containerId: "part-one"`
-// to a top-level artifact. Omit containerId to leave it unassigned.
+metadata: {
+  containerPath: "Dead Suns Adaptation/Chapter 1/Part 1";
+}
 ```
 
-Use `validateConfig(config)` before import and
-`resolveContainerHierarchy(config)` to obtain parent-first containers with ID
-ancestry and display path segments. Journal pages and playlist sounds use their
-owning document's placement. Legacy `metadata.containerPath` remains supported;
-use only one placement mechanism per artifact. Container labels and parents may
-change without changing IDs. Foundry folder creation and reconciliation are a
-future mapping concern; see
-[ADR 0004](docs/decisions/0004-container-hierarchy.md).
+Call `validateConfig(config)` before import. `resolveContainerHierarchy(config)`
+returns the desired containers, including all parents, in parent-first order.
+Identity is the pair `(category, path)`: Scenes at the same path share
+containers, while Playlists at that path form a separate tree. Scene and Actor
+subtypes share their respective categories. No container declarations or
+taxonomy IDs are needed.
 
-The exported `deadSunsContainers` configuration supplies the initial DAC-19
-tree:
+Paths are case-sensitive slash-separated names. A single trailing slash is
+accepted and removed for resolution. Empty names, surrounding whitespace, dot
+segments, backslashes, and control characters are rejected. Omit the field for
+unassigned content. There is no domain depth limit. Journal pages and playlist
+sounds inherit their owner's placement; an explicit path must match the owner's.
 
-```text
-Dead Suns Adaptation/
-  Miscellaneous
-  Locations
-  Elements
-  Chapter 1
-```
+`deadSunsContainerPaths` exports suggested root, Miscellaneous, Locations,
+Elements, and Chapter 1 paths beneath Dead Suns Adaptation. Only paths actually
+referenced by artifacts (and their parents) become desired containers.
 
-Set `containers: deadSunsContainers` in an adaptation configuration. Its child
-IDs are `miscellaneous`, `locations`, `elements`, and `chapter-1`; the root ID
-is `dead-suns-adaptation`. Extend the list as more content is defined.
+The future importer must create missing containers in each mapped document
+category and reconcile existing ones. This resolver does not write to Foundry.
+Handouts retain a separate logical category pending a concrete document mapping.
+See [ADR 0004](docs/decisions/0004-container-hierarchy.md).

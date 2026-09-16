@@ -1,51 +1,65 @@
-# ADR 0004: Explicit logical container hierarchy
+# ADR 0004: Derive category-scoped containers from artifact paths
 
-Status: proposed for DAC-19 review
+Status: proposed for DAC-19 review; replaces the initial explicit-ID proposal
 
 ## Decision
 
-Configuration may declare a forest of `containers`, each with a stable lowercase
-kebab-case `id`, a nonblank display `name`, and an optional `parentId`.
-Top-level artifacts select a container with `containerId`. IDs are unique across
-the configuration and remain independent of artifact taxonomy IDs and display
-names. Roots, depth, and names are configuration choices; no chapter or part
-structure is inferred from taxonomy indices. Duplicate display names are
-allowed.
+Artifact taxonomy metadata `containerPath` defines logical placement. The pair
+of artifact category and canonical path identifies a container. Categories use
+existing domain kinds, independent of Foundry classes. Scene subtypes share one
+scene hierarchy; Actor subtypes share one actor hierarchy. Scenes and Playlists
+at the same path remain separate. Handouts remain their own category until a
+concrete Foundry mapping is decided.
 
-`validateConfig` rejects duplicate or invalid IDs, missing parents, cycles,
-unknown placements, and ambiguous use of both `containerId` and legacy
-`metadata.containerPath`. Journal pages and playlist sounds inherit placement
-from their owning artifact and cannot set `containerId`.
+Paths contain arbitrary slash-separated names. Resolution accepts a single
+trailing slash, preserves case and Unicode, and rejects empty segments, leading
+slashes, surrounding name whitespace, dot segments, backslashes, and control
+characters. No domain depth limit or filesystem semantics apply. Omitted paths
+mean unassigned placement. Validation runs through `validateConfig` before the
+existing import planner can proceed.
 
-`resolveContainerHierarchy` validates the hierarchy and returns containers in
-parent-first order, preserving declaration traversal order for unrelated nodes.
-Each result includes an ancestry of IDs and an array of display-name segments.
-It does not mutate configuration or create Foundry documents. Invalid hierarchy
-input is rejected; full artifact validation remains `validateConfig`'s job.
+`resolveContainerHierarchy` derives every ancestor and deduplicates by category
+and path. Output is deterministic for the same input, parent-first, with
+unrelated branches ordered by first reference. Each result supplies category,
+canonical path, name, and an optional parentPath in the same category. It
+neither mutates configuration nor creates Foundry documents. Callers must use
+`validateConfig` for full artifact identity and relationship validation; the
+resolver validates container paths and embedded placement only.
 
-## Compatibility and boundaries
+Journal pages and playlist sounds inherit placement from their owning documents.
+An explicit child path is accepted only if it matches the owner's canonical
+path; it cannot create an independent folder hierarchy. Missing owner references
+are handled by existing artifact reference validation.
 
-Containers are optional. Existing configurations and legacy free-text paths
-continue to validate, but legacy paths are not converted into container IDs. An
-artifact's explicit placement participates in its existing fingerprint, so
-moving it produces an update or conflict through the existing three-way planner.
-Renaming or reparenting a container does not alter artifact identity or artifact
-fingerprints. Folder reconciliation needs its own future state and provenance.
+## Configuration and compatibility
 
-Logical containers do not encode Foundry document types, folder depth limits,
-UUIDs, or persistence. A later mapper must project this hierarchy into the
-appropriate document-specific folders, reconcile container changes, and resolve
-embedded document placement through their owners. This change does not claim to
-plan or execute folder creation.
+The five initial Dead Suns paths are authoring constants in
+`deadSunsContainerPaths`: the campaign root and its Miscellaneous, Locations,
+Elements, and Chapter 1 children. They are suggestions, not a required global
+tree for every category. Only referenced paths and ancestors are resolved.
 
-## Scope evidence
+The unreleased explicit `containerId`, `ContainerDefinition`, and `containers`
+configuration introduced in the first DAC-19 commit are removed. Existing
+`metadata.containerPath` is now the authoritative, validated field, rather than
+a legacy fallback. Containers do not need taxonomy IDs.
 
-The referenced DAC-19 conversation supplies the task title but no detailed
-acceptance criteria. This proposal follows ADR 0001 and ADR 0003;
-campaign-specific container names and any mandatory level constraints remain to
-be confirmed.
+Artifact fingerprints continue to include the authored metadata. A path change
+participates in the existing three-way update/conflict checks. Spelling changes
+such as adding a trailing slash can change an artifact fingerprint even though
+container resolution is equivalent; fingerprint semantics are unchanged here.
 
-The user subsequently supplied the initial hierarchy: Dead Suns Adaptation with
-Miscellaneous, Locations, Elements, and Chapter 1 as direct children. It is
-provided as `deadSunsContainers` in the configuration layer, with no
-domain-level special cases or implied extra levels.
+## Future importer responsibilities
+
+The resolved hierarchy describes desired containers, including absent parents. A
+future importer must map categories to Foundry document types, look up existing
+containers by category and path, and create missing containers parent-first.
+Foundry depth limits, folder state/provenance, rename/move reconciliation, and
+handout mapping remain adapter concerns. No persistence or folder reconciliation
+is claimed by this domain-only change.
+
+## Acceptance coverage
+
+Tests cover roots, arbitrary nesting, automatic parents, duplicate references,
+shared subtype trees, category isolation, invalid names/paths, embedded
+placement, configuration immutability, and artifact import updates when paths
+change.
