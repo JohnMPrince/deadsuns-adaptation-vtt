@@ -1,9 +1,7 @@
 import type { AdaptationConfig } from "../domain/model.ts";
 import type { TaxonomyId } from "../domain/taxonomy-id.ts";
-import {
-  validateConfig,
-  type ValidationIssue,
-} from "../domain/validate-config.ts";
+import { validateConfig } from "../domain/validate-config.ts";
+import type { ValidationIssue } from "../domain/validation-issue.ts";
 import { fingerprintArtifact } from "./fingerprint.ts";
 
 export type ImportAction = "create" | "update" | "unchanged" | "conflict";
