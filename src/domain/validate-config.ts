@@ -8,14 +8,17 @@ import type {
   AdaptationConfig,
   ArtifactReference,
 } from "./model.ts";
+import { parseAdaptationConfig } from "./parse-config.ts";
 import { parseTaxonomyId, type TaxonomyId } from "./taxonomy-id.ts";
+import type { ValidationIssue } from "./validation-issue.ts";
 
-export interface ValidationIssue {
-  readonly path: string;
-  readonly message: string;
+export function validateConfig(input: unknown): readonly ValidationIssue[] {
+  const parsed = parseAdaptationConfig(input);
+  if (!parsed.success) return parsed.issues;
+  return validateParsedConfig(parsed.config);
 }
 
-export function validateConfig(
+function validateParsedConfig(
   config: AdaptationConfig,
 ): readonly ValidationIssue[] {
   const issues: ValidationIssue[] = validateContainers(config);

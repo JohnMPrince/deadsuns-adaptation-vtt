@@ -33,7 +33,9 @@ export type {
   TaxonomyIndex,
 } from "./taxonomy-id.ts";
 export { validateConfig } from "./validate-config.ts";
-export type { ValidationIssue } from "./validate-config.ts";
+export { parseAdaptationConfig } from "./parse-config.ts";
+export type { AdaptationConfigParseResult } from "./parse-config.ts";
+export type { ValidationIssue } from "./validation-issue.ts";
 export {
   parseContainerPath,
   resolveContainerHierarchy,

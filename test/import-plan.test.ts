@@ -119,6 +119,19 @@ describe("import planning", () => {
       InvalidAdaptationConfigError,
     );
   });
+
+  test("refuses malformed external configuration before planning", async () => {
+    const malformed = {
+      campaign: "DS",
+      title: "Malformed",
+      artifacts: [null],
+    } as unknown as AdaptationConfig;
+
+    await expect(planImport(malformed, [])).rejects.toMatchObject({
+      name: "InvalidAdaptationConfigError",
+      issues: [{ path: "artifacts[0]", message: "Expected an object." }],
+    });
+  });
 });
 
 function state(

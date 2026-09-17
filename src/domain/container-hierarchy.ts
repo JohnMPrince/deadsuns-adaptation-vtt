@@ -1,6 +1,6 @@
 import type { ArtifactKind } from "./artifact-catalog.ts";
 import type { AdaptationConfig } from "./model.ts";
-import type { ValidationIssue } from "./validate-config.ts";
+import type { ValidationIssue } from "./validation-issue.ts";
 
 /** Logical categories, with no dependency on Foundry classes. */
 export type ContainerCategory = Exclude<
