@@ -1,9 +1,14 @@
-import { taxonomyId, validateConfig } from "../domain/index.ts";
+import {
+  parseAdaptationConfigJson,
+  taxonomyId,
+  validateConfig,
+} from "../domain/index.ts";
 import { planImport } from "../import/plan-import.ts";
 
 export const MODULE_ID = "deadsuns-adaptation-vtt";
 
 export const moduleApi = Object.freeze({
+  parseAdaptationConfigJson,
   taxonomyId,
   validateConfig,
   planImport,
