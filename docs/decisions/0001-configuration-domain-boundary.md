@@ -5,10 +5,10 @@ superseded by ADR 0003
 
 ## Context
 
-The adaptation will contain many related actors, scenes, journals, encounters,
-and assets. Foundry document schemas are persistence and UI concerns; using
-those schemas as authoring configuration would couple the content to Foundry v14
-and make validation, migration, and testing unnecessarily difficult.
+The adaptation will contain many related actors, scenes, journals, encounter
+content, and assets. Foundry document schemas are persistence and UI concerns;
+using those schemas as authoring configuration would couple the content to
+Foundry v14 and make validation, migration, and testing unnecessarily difficult.
 
 ## Decision
 
@@ -32,9 +32,15 @@ in later mapping policy unless they express an actual adaptation concept.
 
 ## Initial scope
 
-The first domain slice models actors, scenes, journals, and encounters. It
-checks stable-key format, uniqueness, and typed references. Additional content
+The first domain slice models actors, scenes, journals, journal pages, and their
+typed relationships. Encounters are authored within journal pages and composed
+from referenced taxonomy artifacts such as scenes, actors, playlists, and
+playlist sounds; they are not a standalone artifact kind. Additional content
 kinds should be added when a concrete import use case requires them.
+
+Spreadsheet dataset labels are source-ingestion filters, not artifact metadata.
+Dataset provenance should enter the domain only if a concrete requirement needs
+the model to track which dataset supplied an artifact.
 
 ## Consequences
 

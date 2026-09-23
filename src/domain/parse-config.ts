@@ -96,8 +96,15 @@ function inspectOptionalMetadata(
     issues.push({ path, message: "Expected an object." });
     return;
   }
-  for (const key of ["containerPath", "chapter", "part", "dataset"] as const) {
+  for (const key of ["containerPath", "chapter", "part"] as const) {
     inspectOptionalString(value, key, `${path}.${key}`, issues);
+  }
+  if (Object.hasOwn(value, "dataset")) {
+    issues.push({
+      path: `${path}.dataset`,
+      message:
+        "Dataset is a source-ingestion filter and is not part of artifact metadata.",
+    });
   }
 }
 
