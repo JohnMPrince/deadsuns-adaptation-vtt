@@ -46,10 +46,10 @@ describe("import planning", () => {
       kind: "item" as const,
       taxonomyId: taxonomyId("DS-ITM-01.01.09.00", "ITM"),
       name: "Ordered item",
-      metadata: { chapter: "One", dataset: "Initial" },
+      metadata: { chapter: "One", part: "Initial" },
     };
     const right = {
-      metadata: { dataset: "Initial", chapter: "One" },
+      metadata: { part: "Initial", chapter: "One" },
       name: "Ordered item",
       taxonomyId: taxonomyId("DS-ITM-01.01.09.00", "ITM"),
       kind: "item" as const,

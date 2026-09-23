@@ -21,7 +21,6 @@ describe("adaptation configuration validation", () => {
             containerPath: "Dead Suns Adaptation/Miscellaneous",
             chapter: "Miscellaneous",
             part: "Locations",
-            dataset: "Initial",
           },
         },
         {
@@ -102,7 +101,7 @@ describe("adaptation configuration validation", () => {
           name: "Scene",
           actors: [null, { taxonomyId: 42 }],
           tags: ["valid", false],
-          metadata: { dataset: 1 },
+          metadata: { chapter: 1 },
         },
         {
           kind: "journalPage",
@@ -125,7 +124,7 @@ describe("adaptation configuration validation", () => {
     if (result.success)
       throw new Error("Expected structural validation issues.");
     expect(result.issues.map(({ path }) => path)).toEqual([
-      "artifacts[0].metadata.dataset",
+      "artifacts[0].metadata.chapter",
       "artifacts[0].tags[1]",
       "artifacts[0].actors[0]",
       "artifacts[0].actors[1].taxonomyId",
@@ -153,5 +152,31 @@ describe("adaptation configuration validation", () => {
 
     const result = parseAdaptationConfig(input);
     expect(result).toEqual({ success: true, config: input });
+  });
+
+  test("rejects source dataset filters as artifact metadata", () => {
+    const result = parseAdaptationConfig({
+      campaign: "DS",
+      title: "Example",
+      artifacts: [
+        {
+          kind: "actor",
+          taxonomyId: "DS-NPC-01.01.01.00",
+          name: "Actor",
+          metadata: { dataset: "Initial" },
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      success: false,
+      issues: [
+        {
+          path: "artifacts[0].metadata.dataset",
+          message:
+            "Dataset is a source-ingestion filter and is not part of artifact metadata.",
+        },
+      ],
+    });
   });
 });

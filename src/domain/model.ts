@@ -13,7 +13,6 @@ export interface ArtifactMetadata {
   readonly containerPath?: string;
   readonly chapter?: string;
   readonly part?: string;
-  readonly dataset?: string;
 }
 
 interface ArtifactDefinition<K extends ArtifactKind, C extends ArtifactCode> {
