@@ -1,7 +1,7 @@
 {
   "id": "deadsuns-adaptation-vtt",
   "title": "Dead Suns Adaptation Importer",
-  "description": "Configuration-driven adventure import foundation. This development skeleton exposes validation and planning; it does not yet import documents.",
+  "description": "Configuration-driven adventure importer with validation, planning, and a bounded Docking Bay sample import.",
   "version": "0.0.0",
   "compatibility": { "minimum": "14", "verified": "14.367", "maximum": "14" },
   "esmodules": ["dist/deadsuns-adaptation-vtt.js"],

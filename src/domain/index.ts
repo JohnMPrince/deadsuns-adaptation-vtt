@@ -3,11 +3,7 @@ export {
   artifactCodes,
   isArtifactCode,
 } from "./artifact-catalog.ts";
-export type {
-  ArtifactCode,
-  ArtifactKind,
-  FoundryDocumentType,
-} from "./artifact-catalog.ts";
+export type { ArtifactCode, ArtifactKind } from "./artifact-catalog.ts";
 export type {
   ActorArtifactCode,
   ActorDefinition,

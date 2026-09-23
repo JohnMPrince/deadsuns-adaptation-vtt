@@ -28,43 +28,38 @@ describe("artifact code catalogue", () => {
     ]);
   });
 
-  test("maps every code to its domain kind, subcategory, and Foundry target", () => {
+  test("maps every code to its domain kind and subcategory", () => {
     expect(artifactCodeDefinitions).toEqual({
-      CIN: { kind: "scene", subcategory: "cinematic", foundryType: "Scene" },
-      BAT: { kind: "scene", subcategory: "battleMap", foundryType: "Scene" },
-      REG: { kind: "scene", subcategory: "regionalMap", foundryType: "Scene" },
-      SOC: { kind: "scene", subcategory: "socialMap", foundryType: "Scene" },
+      CIN: { kind: "scene", subcategory: "cinematic" },
+      BAT: { kind: "scene", subcategory: "battleMap" },
+      REG: { kind: "scene", subcategory: "regionalMap" },
+      SOC: { kind: "scene", subcategory: "socialMap" },
       NPC: {
         kind: "actor",
         subcategory: "nonPlayerCharacter",
-        foundryType: "Actor",
       },
-      AA: { kind: "actor", subcategory: "alienArchive", foundryType: "Actor" },
+      AA: { kind: "actor", subcategory: "alienArchive" },
       SA: {
         kind: "actor",
         subcategory: "starshipArchive",
-        foundryType: "Actor",
       },
       JRN: {
         kind: "journal",
         subcategory: "entry",
-        foundryType: "JournalEntry",
       },
       JPG: {
         kind: "journalPage",
         subcategory: "page",
-        foundryType: "JournalEntryPage",
       },
-      HND: { kind: "handout", subcategory: null, foundryType: null },
-      ITM: { kind: "item", subcategory: null, foundryType: "Item" },
-      TBL: { kind: "rollTable", subcategory: null, foundryType: "RollTable" },
-      PLY: { kind: "playlist", subcategory: null, foundryType: "Playlist" },
+      HND: { kind: "handout", subcategory: null },
+      ITM: { kind: "item", subcategory: null },
+      TBL: { kind: "rollTable", subcategory: null },
+      PLY: { kind: "playlist", subcategory: null },
       AUD: {
         kind: "playlistSound",
         subcategory: null,
-        foundryType: "PlaylistSound",
       },
-      MAC: { kind: "macro", subcategory: null, foundryType: "Macro" },
+      MAC: { kind: "macro", subcategory: null },
     });
   });
 });
