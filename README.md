@@ -47,7 +47,7 @@ document mapping or system dependency.
 1. Confirm the module appears in Manage Modules and can be enabled in
    Foundry 14.
 2. Reload the world and check the browser console for one `Initialized` and one
-   `Ready (validation and planning only)` message from
+   `Ready (DAC-18 sample import available)` message from
    `deadsuns-adaptation-vtt`.
 3. Confirm there are no module startup errors or failed module file requests.
 4. In the browser console, run:
@@ -93,9 +93,9 @@ developers. The manifest stays at the repository/module root; Vite builds only
 the JavaScript and source map into `dist/`, with public-directory copying
 disabled. Keep the manifest development version aligned with `package.json`.
 
-DAC-17 adds the import trigger, DAC-18 adds sample mapping and writes, DAC-19
-defines container hierarchy, and DAC-20 expands diagnostics. Those capabilities
-are not implemented by this skeleton.
+DAC-18 now provides the first bounded import slice. Later stories can expand the
+supported artifact types, update policy, user-facing trigger, and diagnostics
+without moving Foundry concerns into the domain model.
 
 The manifest and lifecycle follow Foundry's
 [module development guide](https://foundryvtt.com/article/module-development/)
@@ -149,3 +149,33 @@ The future importer must create missing containers in each mapped document
 category and reconcile existing ones. This resolver does not write to Foundry.
 Handouts retain a separate logical category pending a concrete document mapping.
 See [ADR 0004](docs/decisions/0004-container-hierarchy.md).
+
+## DAC-18 Docking Bay sample
+
+`dac18SampleConfig` contains the dependency-complete 16-artifact slice from Part
+I through Detective Elias Mercer: three journals, four pages, one battle scene,
+three actors, one playlist, and four sounds. The configuration preserves the
+taxonomy IDs and container paths from the Initial dataset. It adds only the
+minimum sample prose and explicit module-local media paths needed by the domain
+contract.
+
+The module API exposes `importDac18Sample()` for a deliberate manual run in a
+disposable test world:
+
+```js
+const api = game.modules.get("deadsuns-adaptation-vtt").api;
+await api.importDac18Sample();
+```
+
+The importer validates and plans the entire configuration before creating any
+folders or documents. It creates owners before embedded journal pages and
+playlist sounds, records taxonomy IDs and source fingerprints in module flags,
+and treats a second run as unchanged instead of creating duplicates. DAC-18
+rejects update and conflict plans; it does not overwrite existing content.
+
+The configured image and audio paths are stable targets, but the corresponding
+licensed media files are not stored in this repository. Supply those files at
+the configured module paths before using the sample to verify media playback.
+The three actors are created as SF1E NPC documents; token placement and actor
+system statistics require later configuration because the Initial taxonomy does
+not contain those values.

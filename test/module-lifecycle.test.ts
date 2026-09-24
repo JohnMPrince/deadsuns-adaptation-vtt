@@ -8,7 +8,7 @@ import {
 } from "../src/foundry/lifecycle.ts";
 
 describe("Foundry module lifecycle", () => {
-  test("defers host access until init and exposes non-mutating planning", async () => {
+  test("defers host access until init and exposes planning and import", async () => {
     const callbacks = new Map<string, () => void>();
     const module: { api?: typeof moduleApi } = {};
     const get = vi.fn(() => module);
@@ -31,7 +31,7 @@ describe("Foundry module lifecycle", () => {
     });
     callbacks.get("ready")?.();
     expect(host.console.info).toHaveBeenCalledWith(
-      `${MODULE_ID} | Ready (validation and planning only)`,
+      `${MODULE_ID} | Ready (DAC-18 sample import available)`,
     );
   });
 });

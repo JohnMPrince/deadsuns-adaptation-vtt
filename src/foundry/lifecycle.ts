@@ -4,11 +4,24 @@ import {
   validateConfig,
 } from "../domain/index.ts";
 import { planImport } from "../import/plan-import.ts";
+import { dac18SampleConfig } from "../config/dac-18-sample.ts";
+import { importConfiguredAssets } from "./import-config.ts";
+import {
+  FoundryVttGateway,
+  type FoundryVttRuntime,
+} from "./foundry-vtt-gateway.ts";
 
 export const MODULE_ID = "deadsuns-adaptation-vtt";
 
 export const moduleApi = Object.freeze({
   parseAdaptationConfigJson,
+  dac18SampleConfig,
+  importConfiguredAssets,
+  importDac18Sample: () =>
+    importConfiguredAssets(
+      dac18SampleConfig,
+      new FoundryVttGateway(globalThis as unknown as FoundryVttRuntime),
+    ),
   taxonomyId,
   validateConfig,
   planImport,
@@ -38,6 +51,6 @@ export function registerModuleLifecycle(host: FoundryHost): void {
   });
 
   host.Hooks.once("ready", () => {
-    host.console.info(`${MODULE_ID} | Ready (validation and planning only)`);
+    host.console.info(`${MODULE_ID} | Ready (DAC-18 sample import available)`);
   });
 }
