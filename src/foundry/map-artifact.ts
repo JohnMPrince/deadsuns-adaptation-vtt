@@ -33,7 +33,7 @@ export function mapArtifactToFoundry(
       return mapped(
         artifact.taxonomyId,
         "Actor",
-        { ...common, type: "npc", system: {} },
+        { ...common, type: "npc2", system: {} },
         undefined,
         artifact.metadata?.containerPath,
       );
