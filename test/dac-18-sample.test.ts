@@ -49,6 +49,11 @@ describe("DAC-18 Docking Bay sample import", () => {
       "PlaylistSound",
       "PlaylistSound",
     ]);
+    expect(
+      gateway.created
+        .filter(({ documentName }) => documentName === "Actor")
+        .map(({ data }) => data.type),
+    ).toEqual(["npc2", "npc2", "npc2"]);
     for (const artifact of gateway.created) {
       expect(artifact.data).toHaveProperty(
         "flags.deadsuns-adaptation-vtt.taxonomyId",
@@ -79,6 +84,20 @@ describe("DAC-18 Docking Bay sample import", () => {
     expect(gateway.containers).toHaveLength(containers);
   });
 
+  test("resumes safely after a partial runtime failure", async () => {
+    const gateway = new MemoryGateway("Actor");
+
+    await expect(
+      importConfiguredAssets(dac18SampleConfig, gateway),
+    ).rejects.toThrow("Simulated Actor creation failure");
+    expect(gateway.created).toHaveLength(8);
+
+    const resumed = await importConfiguredAssets(dac18SampleConfig, gateway);
+    expect(resumed.created).toBe(8);
+    expect(resumed.unchanged).toBe(8);
+    expect(gateway.created).toHaveLength(16);
+  });
+
   test("rejects an invalid configuration before any writes", async () => {
     const gateway = new MemoryGateway();
     const invalid: AdaptationConfig = {
@@ -105,6 +124,11 @@ function countKinds(): Record<string, number> {
 class MemoryGateway implements FoundryImportGateway {
   public readonly created: MappedFoundryArtifact[] = [];
   public readonly containers: ResolvedContainer[] = [];
+  private failed = false;
+
+  public constructor(
+    private readonly failOnceForDocument?: MappedFoundryArtifact["documentName"],
+  ) {}
 
   public listExistingArtifacts(): Promise<readonly ExistingArtifactState[]> {
     return Promise.resolve(
@@ -139,6 +163,12 @@ class MemoryGateway implements FoundryImportGateway {
   }
 
   public createArtifact(artifact: MappedFoundryArtifact): Promise<void> {
+    if (!this.failed && artifact.documentName === this.failOnceForDocument) {
+      this.failed = true;
+      return Promise.reject(
+        new Error(`Simulated ${artifact.documentName} creation failure`),
+      );
+    }
     this.created.push(artifact);
     return Promise.resolve();
   }

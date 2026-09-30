@@ -24,6 +24,11 @@ unit-testable without a running Foundry instance.
 ## Consequences
 
 - Repeating the same import does not create duplicates.
+- SF1E actors use the modern `npc2` document type; legacy `npc` documents are
+  not supported by the targeted SF1E version.
+- Foundry creation is not transactional. A rerun after a partial runtime failure
+  keeps fingerprint-matched artifacts unchanged and creates the missing
+  remainder.
 - Existing imported content is not silently overwritten.
 - Source media must be supplied at the configured module-local paths for a
   complete Foundry smoke test.

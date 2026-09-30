@@ -176,6 +176,12 @@ rejects update and conflict plans; it does not overwrite existing content.
 The configured image and audio paths are stable targets, but the corresponding
 licensed media files are not stored in this repository. Supply those files at
 the configured module paths before using the sample to verify media playback.
-The three actors are created as SF1E NPC documents; token placement and actor
-system statistics require later configuration because the Initial taxonomy does
-not contain those values.
+The three actors are created using SF1E's modern `npc2` Actor type; token
+placement and actor system statistics require later configuration because the
+Initial taxonomy does not contain those values.
+
+Foundry document creation is not transactional. If a runtime validation error
+interrupts an import, retain the successfully created artifacts. After
+installing a corrected build, rerun the sample import: taxonomy IDs and source
+fingerprints allow completed artifacts to remain unchanged while missing
+artifacts are created.
