@@ -3,7 +3,7 @@ import type { ContainerCategory } from "../domain/container-hierarchy.ts";
 import { parseTaxonomyId } from "../domain/taxonomy-id.ts";
 
 export type FoundryDocumentName =
-  "Actor" | "Scene" | "JournalEntry" | "Playlist";
+  "Actor" | "Item" | "Scene" | "JournalEntry" | "Playlist";
 export type FoundryEmbeddedName = "JournalEntryPage" | "PlaylistSound";
 
 export interface MappedFoundryArtifact {
@@ -12,6 +12,8 @@ export interface MappedFoundryArtifact {
   readonly parentTaxonomyId?: string;
   readonly containerCategory: ContainerCategory;
   readonly containerPath?: string;
+  /** Markdown source for the gateway's journal content population mechanism. */
+  readonly journalContentSource?: string;
   readonly data: Readonly<Record<string, unknown>>;
 }
 
@@ -19,6 +21,12 @@ export function mapArtifactToFoundry(
   artifact: AdaptationArtifactDefinition,
   fingerprint: string,
 ): MappedFoundryArtifact {
+  // DAC-23 preserves order and open roles; each supported slot uses its first match.
+  const asset = (role: string) =>
+    artifact.assets?.find((reference) => reference.role === role)?.path;
+  const portrait = asset("portrait");
+  const token = asset("token");
+  const background = asset("background");
   const common = {
     name: artifact.name,
     flags: {
@@ -33,7 +41,13 @@ export function mapArtifactToFoundry(
       return mapped(
         artifact.taxonomyId,
         "Actor",
-        { ...common, type: "npc2", system: {} },
+        {
+          ...common,
+          type: "npc2",
+          system: {},
+          ...(portrait ? { img: portrait } : {}),
+          ...(token ? { prototypeToken: { texture: { src: token } } } : {}),
+        },
         undefined,
         artifact.metadata?.containerPath,
       );
@@ -43,8 +57,8 @@ export function mapArtifactToFoundry(
         "Scene",
         {
           ...common,
-          ...(artifact.background
-            ? { background: { src: artifact.background } }
+          ...((background ?? artifact.background)
+            ? { background: { src: background ?? artifact.background } }
             : {}),
         },
         undefined,
@@ -58,18 +72,23 @@ export function mapArtifactToFoundry(
         undefined,
         artifact.metadata?.containerPath,
       );
-    case "journalPage":
-      return mapped(
-        artifact.taxonomyId,
-        "JournalEntryPage",
-        {
-          ...common,
-          type: "text",
-          text: { content: artifact.markdown, format: 1 },
-        },
-        artifact.journal.taxonomyId,
-        artifact.metadata?.containerPath,
-      );
+    case "journalPage": {
+      const contentSource = asset("content");
+      return {
+        ...mapped(
+          artifact.taxonomyId,
+          "JournalEntryPage",
+          {
+            ...common,
+            type: "text",
+            text: { content: artifact.markdown, format: 1 },
+          },
+          artifact.journal.taxonomyId,
+          artifact.metadata?.containerPath,
+        ),
+        ...(contentSource ? { journalContentSource: contentSource } : {}),
+      };
+    }
     case "playlist":
       return mapped(
         artifact.taxonomyId,
@@ -82,8 +101,21 @@ export function mapArtifactToFoundry(
       return mapped(
         artifact.taxonomyId,
         "PlaylistSound",
-        { ...common, path: artifact.source },
+        { ...common, path: asset("audio") ?? artifact.source },
         artifact.playlist.taxonomyId,
+        artifact.metadata?.containerPath,
+      );
+    case "item":
+      return mapped(
+        artifact.taxonomyId,
+        "Item",
+        {
+          ...common,
+          type: "equipment",
+          system: {},
+          ...(portrait ? { img: portrait } : {}),
+        },
+        undefined,
         artifact.metadata?.containerPath,
       );
     default:
@@ -115,6 +147,7 @@ function categoryForDocument(
   documentName: MappedFoundryArtifact["documentName"],
 ): ContainerCategory {
   if (documentName === "Actor") return "actor";
+  if (documentName === "Item") return "item";
   if (documentName === "Scene") return "scene";
   if (documentName === "JournalEntry" || documentName === "JournalEntryPage")
     return "journal";
