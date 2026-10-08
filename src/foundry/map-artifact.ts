@@ -45,6 +45,7 @@ export function mapArtifactToFoundry(
           ...common,
           type: "npc2",
           system: {},
+          // Portrait and prototype-token image are separate Foundry Actor fields.
           ...(portrait ? { img: portrait } : {}),
           ...(token ? { prototypeToken: { texture: { src: token } } } : {}),
         },
@@ -73,6 +74,7 @@ export function mapArtifactToFoundry(
         artifact.metadata?.containerPath,
       );
     case "journalPage": {
+      // Importer-only source path; the gateway loads it before page creation.
       const contentSource = asset("content");
       return {
         ...mapped(
@@ -81,6 +83,7 @@ export function mapArtifactToFoundry(
           {
             ...common,
             type: "text",
+            // Preserve the legacy inline fallback (Foundry HTML format = 1).
             text: { content: artifact.markdown, format: 1 },
           },
           artifact.journal.taxonomyId,
