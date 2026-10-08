@@ -16,6 +16,8 @@ artifact-code catalogue and produces a non-mutating import plan before any
 Foundry document is changed.
 
 Architecture decisions are recorded in [`docs/decisions`](docs/decisions).
+Supported module flags and Foundry field explanations are documented in
+[`Flags.md`](Flags.md).
 
 ## Development module installation (DAC-12)
 

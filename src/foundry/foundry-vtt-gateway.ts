@@ -133,6 +133,7 @@ export class FoundryVttGateway implements FoundryImportGateway {
             { cause: error },
           );
         }
+        // Foundry nests custom keys under a module scope: flags[scope][key].
         const flags = artifact.data.flags as Readonly<
           Record<string, Readonly<Record<string, unknown>>>
         >;
@@ -142,6 +143,7 @@ export class FoundryVttGateway implements FoundryImportGateway {
             ...flags,
             [scope]: { ...flags[scope], journalContentSource: source },
           },
+          // Foundry JOURNAL_ENTRY_PAGE_FORMATS.MARKDOWN = 2 (HTML = 1).
           ...(markdown === undefined ? {} : { text: { markdown, format: 2 } }),
         };
       }
