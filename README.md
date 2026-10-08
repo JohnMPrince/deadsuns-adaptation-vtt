@@ -185,3 +185,32 @@ interrupts an import, retain the successfully created artifacts. After
 installing a corrected build, rerun the sample import: taxonomy IDs and source
 fingerprints allow completed artifacts to remain unchanged while missing
 artifacts are created.
+
+## Asset references (DAC-23)
+
+Every artifact accepts optional `assets: readonly AssetReference[] | null`. Each
+reference contains a string `role` and `path`. Omitted, null, and empty
+collections represent no assets, preserving existing configurations. An actor
+can configure both portrait and token references:
+
+```ts
+assets: [
+  { role: "portrait", path: "assets/actors/npcs/ferani-nadaz.webp" },
+  { role: "token", path: "assets/actors/npcs/ferani-nadaz-token.webp" },
+];
+```
+
+`parseAssetReferences(cell)` parses the optional **Asset Path** cell's
+`<role>: <path>` entries, separated by CRLF, LF, or CR. It trims surrounding
+whitespace, skips blank lines, and preserves order, duplicates, role case, and
+relative path contents. Missing, null, or blank cells return an empty array.
+Malformed entries throw an error identifying the line; blank roles or paths are
+invalid. Roles are open strings, allowing background and other asset uses.
+
+The domain validator checks reference objects and nonblank string fields. It
+preserves configured values and does not check file existence or load assets.
+References survive JSON serialization and participate in source fingerprints.
+Spreadsheet integration remains outside DAC-23; a future ingestion layer can
+pass the optional column value to this helper. Dataset remains a source filter.
+Foundry linking is deferred to DAC-24. Existing scene `background`, journal page
+`markdown`, and playlist sound `source` contracts remain in place.
