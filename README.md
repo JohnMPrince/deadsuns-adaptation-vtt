@@ -225,6 +225,11 @@ first exact role match: Scene `background`, Actor `portrait` and `token`, Item
 references override legacy scene backgrounds and track sources. Unknown roles
 are ignored; omitted, null, and empty collections preserve legacy behavior.
 
+Scene images use Foundry v14's embedded `levels[].background.src`, with one
+`Background` Level serving as the default initial Level. This also applies to
+legacy configuration backgrounds. Existing imported Scenes are not automatically
+repaired; use fresh smoke-test IDs when testing the corrected creation mapping.
+
 Journal Page `content` references identify `.md` files loaded during page
 creation and supplied through Foundry's Markdown text fields. Pages without a
 content reference retain their inline content. HTTP 404 preserves inline content
