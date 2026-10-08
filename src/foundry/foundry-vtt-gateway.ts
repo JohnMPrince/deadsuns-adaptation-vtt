@@ -12,6 +12,23 @@ import type {
 
 const scope = "deadsuns-adaptation-vtt";
 
+export type JournalContentLoader = (
+  path: string,
+) => Promise<string | undefined>;
+
+/** A missing Markdown file preserves inline content; other failures remain actionable. */
+export async function loadJournalContent(
+  path: string,
+): Promise<string | undefined> {
+  const response = await fetch(path);
+  if (response.status === 404) return undefined;
+  if (!response.ok)
+    throw new Error(
+      `Unable to load journal content ${path}: HTTP ${String(response.status)}.`,
+    );
+  return response.text();
+}
+
 interface FoundryDocument {
   readonly id: string;
   readonly uuid: string;
@@ -33,12 +50,14 @@ interface FoundryDocumentClass {
 export interface FoundryVttRuntime {
   readonly game: {
     readonly actors: Iterable<FoundryDocument>;
+    readonly items: Iterable<FoundryDocument>;
     readonly scenes: Iterable<FoundryDocument>;
     readonly journal: Iterable<FoundryDocument>;
     readonly playlists: Iterable<FoundryDocument>;
     readonly folders: Iterable<FoundryDocument>;
   };
   readonly Actor: FoundryDocumentClass;
+  readonly Item: FoundryDocumentClass;
   readonly Scene: FoundryDocumentClass;
   readonly JournalEntry: FoundryDocumentClass;
   readonly Playlist: FoundryDocumentClass;
@@ -50,7 +69,10 @@ export class FoundryVttGateway implements FoundryImportGateway {
   private readonly artifacts = new Map<string, FoundryDocument>();
   private readonly folders = new Map<string, FoundryDocument>();
 
-  public constructor(private readonly runtime: FoundryVttRuntime) {}
+  public constructor(
+    private readonly runtime: FoundryVttRuntime,
+    private readonly journalContentLoader: JournalContentLoader = loadJournalContent,
+  ) {}
 
   public listExistingArtifacts(): Promise<readonly ExistingArtifactState[]> {
     this.artifacts.clear();
@@ -96,9 +118,36 @@ export class FoundryVttGateway implements FoundryImportGateway {
         throw new Error(
           `Missing embedded parent ${artifact.parentTaxonomyId}.`,
         );
+      let data = artifact.data;
+      if (
+        artifact.documentName === "JournalEntryPage" &&
+        artifact.journalContentSource
+      ) {
+        const source = artifact.journalContentSource;
+        let markdown: string | undefined;
+        try {
+          markdown = await this.journalContentLoader(source);
+        } catch (error) {
+          throw new Error(
+            `Unable to populate ${artifact.taxonomyId} from ${source}.`,
+            { cause: error },
+          );
+        }
+        const flags = artifact.data.flags as Readonly<
+          Record<string, Readonly<Record<string, unknown>>>
+        >;
+        data = {
+          ...data,
+          flags: {
+            ...flags,
+            [scope]: { ...flags[scope], journalContentSource: source },
+          },
+          ...(markdown === undefined ? {} : { text: { markdown, format: 2 } }),
+        };
+      }
       const [created] = await parent.createEmbeddedDocuments(
         artifact.documentName,
-        [artifact.data],
+        [data],
       );
       if (!created)
         throw new Error(`Foundry did not create ${artifact.taxonomyId}.`);
@@ -142,13 +191,14 @@ export class FoundryVttGateway implements FoundryImportGateway {
 
   private topLevelCollections(): readonly Iterable<FoundryDocument>[] {
     const { game } = this.runtime;
-    return [game.actors, game.scenes, game.journal, game.playlists];
+    return [game.actors, game.items, game.scenes, game.journal, game.playlists];
   }
 
   private documentClass(
     name: MappedFoundryArtifact["documentName"],
   ): FoundryDocumentClass {
     if (name === "Actor") return this.runtime.Actor;
+    if (name === "Item") return this.runtime.Item;
     if (name === "Scene") return this.runtime.Scene;
     if (name === "JournalEntry") return this.runtime.JournalEntry;
     if (name === "Playlist") return this.runtime.Playlist;
@@ -183,6 +233,7 @@ function documentNameForCategory(
   category: ContainerCategory,
 ): FoundryDocumentName {
   if (category === "actor") return "Actor";
+  if (category === "item") return "Item";
   if (category === "scene") return "Scene";
   if (category === "journal") return "JournalEntry";
   if (category === "playlist") return "Playlist";

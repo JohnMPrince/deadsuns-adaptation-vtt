@@ -212,5 +212,33 @@ preserves configured values and does not check file existence or load assets.
 References survive JSON serialization and participate in source fingerprints.
 Spreadsheet integration remains outside DAC-23; a future ingestion layer can
 pass the optional column value to this helper. Dataset remains a source filter.
-Foundry linking is deferred to DAC-24. Existing scene `background`, journal page
-`markdown`, and playlist sound `source` contracts remain in place.
+Existing scene `background`, journal page `markdown`, and playlist sound
+`source` contracts remain in place.
+
+## Configured asset import (DAC-24)
+
+The mapper now links configured references to Foundry media fields. It uses the
+first exact role match: Scene `background`, Actor `portrait` and `token`, Item
+`portrait`, Journal Page `content`, and Playlist Track `audio`. Configured
+references override legacy scene backgrounds and track sources. Unknown roles
+are ignored; omitted, null, and empty collections preserve legacy behavior.
+
+Journal Page `content` references identify `.md` files loaded during page
+creation and supplied through Foundry's Markdown text fields. Pages without a
+content reference retain their inline content. HTTP 404 preserves inline content
+and records the source path; other loading failures report an error. Unchanged
+repeat imports do not reload content, including sources that were previously
+missing. The gateway loader is injectable for testing and custom content
+loading. Items are minimal SF1E `equipment` documents, with Item folders and
+provenance discovery. Item subtype and statistics configuration remain future
+work.
+
+Paths are passed through unchanged. Missing media does not block document
+creation, and image/audio existence checks or downloads do not run during
+import. Repeat imports create no duplicates. Changed asset references still
+produce update plans, which the creation-only importer rejects before any
+writes.
+
+See [ADR 0006](docs/decisions/0006-configured-asset-mapping.md) for field
+mappings and the decisions behind these defaults. Automated tests use a Foundry
+runtime double; live Foundry verification has not yet been performed for DAC-24.
