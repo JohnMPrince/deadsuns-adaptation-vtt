@@ -59,7 +59,15 @@ export function mapArtifactToFoundry(
         {
           ...common,
           ...((background ?? artifact.background)
-            ? { background: { src: background ?? artifact.background } }
+            ? {
+                // v14 stores images on Levels; the first is the initial Level.
+                levels: [
+                  {
+                    name: "Background",
+                    background: { src: background ?? artifact.background },
+                  },
+                ],
+              }
             : {}),
         },
         undefined,

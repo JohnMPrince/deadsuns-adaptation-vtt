@@ -68,8 +68,8 @@ describe("configured Foundry asset slots", () => {
           assets: [{ role: "background", path: "missing.webp" }],
         },
         "f",
-      ).data.background,
-    ).toEqual({ src: "missing.webp" });
+      ).data.levels,
+    ).toEqual([{ name: "Background", background: { src: "missing.webp" } }]);
     expect(
       mapArtifactToFoundry(
         {
@@ -80,6 +80,34 @@ describe("configured Foundry asset slots", () => {
       ).data.path,
     ).toBe("missing.ogg");
   });
+
+  test.each(["CIN", "BAT", "REG", "SOC"] as const)(
+    "maps %s backgrounds into one v14 Level without deprecated Scene fields",
+    (code) => {
+      const artifact = {
+        kind: "scene" as const,
+        taxonomyId: taxonomyId(`DS-${code}-01.01.01.00`, code),
+        name: "Scene",
+        background: "legacy.webp",
+        assets: [{ role: "background", path: "configured.webp" }],
+      };
+      const { data } = mapArtifactToFoundry(artifact, "f");
+      expect(data.levels).toEqual([
+        { name: "Background", background: { src: "configured.webp" } },
+      ]);
+      expect(data).not.toHaveProperty("background");
+      expect(data).not.toHaveProperty("initialLevel");
+      expect(
+        mapArtifactToFoundry({ ...artifact, assets: null }, "f").data.levels,
+      ).toEqual([{ name: "Background", background: { src: "legacy.webp" } }]);
+      const empty = mapArtifactToFoundry(
+        { kind: "scene", taxonomyId: artifact.taxonomyId, name: "Empty" },
+        "f",
+      ).data;
+      expect(empty).not.toHaveProperty("levels");
+      expect(empty).not.toHaveProperty("background");
+    },
+  );
 
   test.each([undefined, null, [], [{ role: "unknown", path: "ignored.webp" }]])(
     "preserves legacy mappings when slots are unassigned: %j",

@@ -144,7 +144,7 @@ describe("Foundry VTT gateway", () => {
       "missing-token.webp",
     );
     expect([...runtime.game.scenes][0]).toHaveProperty(
-      "data.background.src",
+      "data.levels.0.background.src",
       "missing.webp",
     );
     expect([...([...runtime.game.journal][0]?.pages ?? [])][0]).toHaveProperty(

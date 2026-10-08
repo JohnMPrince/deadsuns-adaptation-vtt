@@ -10,7 +10,7 @@ configuration.
 
 | Artifact                         | Role         | Foundry field                          |
 | -------------------------------- | ------------ | -------------------------------------- |
-| Scene                            | `background` | `background.src`                       |
+| Scene                            | `background` | `levels[0].background.src`             |
 | Actor                            | `portrait`   | `img`                                  |
 | Actor                            | `token`      | `prototypeToken.texture.src`           |
 | Item                             | `portrait`   | `img`                                  |
@@ -18,12 +18,18 @@ configuration.
 | Playlist Track (`playlistSound`) | `audio`      | `path`                                 |
 
 Configured references override legacy scene backgrounds and sound sources.
-Omitted, null, empty, or unrecognized references preserve legacy mappings.
-Journal pages remain text pages. A `content` reference identifies the `.md`
-source that the gateway loads when creating the page. Loaded source becomes
-`text.markdown` with Foundry's Markdown format (`2`); pages without a content
-reference retain their existing inline text mapping. `image` has no special
-meaning for Items or Journal Pages in this scope.
+Foundry v14 Scene images are stored in an embedded Level named `Background`. The
+first Level is the default initial Level; Foundry generates its ID and schema
+defaults. Both configured and legacy image paths use this mapping. No deprecated
+Scene-level background field is emitted. Scenes without an image leave Level
+creation/defaults to Foundry. Existing imported Scenes are not automatically
+repaired by the creation-only importer. Omitted, null, empty, or unrecognized
+references preserve legacy mappings. Journal pages remain text pages. A
+`content` reference identifies the `.md` source that the gateway loads when
+creating the page. Loaded source becomes `text.markdown` with Foundry's Markdown
+format (`2`); pages without a content reference retain their existing inline
+text mapping. `image` has no special meaning for Items or Journal Pages in this
+scope.
 
 Items become top-level SF1E `equipment` documents with Item folders. The domain
 has no Item subtype or system statistics yet. This is a minimal import
