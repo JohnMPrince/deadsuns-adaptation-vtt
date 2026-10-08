@@ -10,6 +10,7 @@ export type {
   AdaptationArtifactDefinition,
   AdaptationConfig,
   ArtifactMetadata,
+  AssetReference,
   ArtifactReference,
   HandoutDefinition,
   ItemDefinition,
@@ -42,3 +43,5 @@ export type {
   ContainerCategory,
   ResolvedContainer,
 } from "./container-hierarchy.ts";
+
+export { parseAssetReferences } from "./parse-asset-references.ts";

@@ -68,6 +68,7 @@ function inspectArtifact(
   requireNonblankString(value, "name", `${path}.name`, issues);
   inspectOptionalMetadata(value.metadata, `${path}.metadata`, issues);
   inspectOptionalStringArray(value.tags, `${path}.tags`, issues);
+  inspectOptionalAssets(value.assets, `${path}.assets`, issues);
 
   switch (kind) {
     case "scene":
@@ -86,6 +87,32 @@ function inspectArtifact(
   }
 }
 
+function inspectOptionalAssets(
+  value: unknown,
+  path: string,
+  issues: ValidationIssue[],
+): void {
+  if (value === undefined || value === null) return;
+  if (!Array.isArray(value)) {
+    issues.push({
+      path,
+      message: "Expected an array of asset references or null.",
+    });
+    return;
+  }
+  value.forEach((entry, index) => {
+    const entryPath = `${path}[${String(index)}]`;
+    if (!isRecord(entry)) {
+      issues.push({
+        path: entryPath,
+        message: "Expected an asset reference object.",
+      });
+      return;
+    }
+    requireNonblankString(entry, "role", `${entryPath}.role`, issues);
+    requireNonblankString(entry, "path", `${entryPath}.path`, issues);
+  });
+}
 function inspectOptionalMetadata(
   value: unknown,
   path: string,

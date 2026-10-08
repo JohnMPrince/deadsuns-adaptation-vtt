@@ -8,6 +8,11 @@ export interface ArtifactReference<C extends ArtifactCode = ArtifactCode> {
   readonly taxonomyId: TaxonomyId<C>;
 }
 
+export interface AssetReference {
+  readonly role: string;
+  readonly path: string;
+}
+
 export interface ArtifactMetadata {
   /** Slash-separated logical path, scoped to the artifact category. */
   readonly containerPath?: string;
@@ -21,6 +26,8 @@ interface ArtifactDefinition<K extends ArtifactKind, C extends ArtifactCode> {
   readonly name: string;
   readonly metadata?: ArtifactMetadata;
   readonly tags?: readonly string[];
+  /** Ordered asset references from Asset Path; omitted, null, or empty when unassigned. */
+  readonly assets?: readonly AssetReference[] | null;
 }
 
 export type ActorDefinition = ArtifactDefinition<"actor", ActorArtifactCode>;
