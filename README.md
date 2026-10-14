@@ -139,8 +139,8 @@ ingestion filter and never appears in JSON. Metadata is an extensible JSON
 dictionary on every artifact type: unknown keys are preserved, including nested
 objects and arrays. Known fields retain their validation. On AUD rows, this
 includes `syrinscapeSoundID` (a positive safe integer) and `syrinscapeSoundType`
-(a nonblank string). Supply a JSON object or comma/newline-separated
-`key: value` entries, for example
+(`Element` or `Mood`, case-sensitive). Supply a JSON object or
+comma/newline-separated `key: value` entries, for example
 `syrinscapeSoundID: 123456, syrinscapeSoundType: 'Element'`. The original labels
 `syrinscape sound id` and `syrinscape sound type` are also accepted. These
 fields merge with container/chapter/part metadata, survive JSON serialization,

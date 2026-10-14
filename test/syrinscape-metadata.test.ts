@@ -35,6 +35,54 @@ function input(metadata: string) {
 }
 
 describe("Syrinscape sound metadata", () => {
+  test.each(["Element", "Mood"])(
+    "accepts and preserves %s through ingestion and JSON",
+    (type) => {
+      const result = parseTaxonomySheet(
+        input(`syrinscapeSoundID: 123456\nsyrinscapeSoundType: ${type}`),
+        options,
+      );
+      if (!result.success) throw new Error(JSON.stringify(result.issues));
+      expect(result.config.artifacts[1]?.metadata?.syrinscapeSoundType).toBe(
+        type,
+      );
+      expect(parseAdaptationConfigJson(result.json)).toEqual({
+        success: true,
+        config: result.config,
+      });
+    },
+  );
+  test.each(["element", "mood", "Music", "Element ", "", null, 123])(
+    "rejects invalid sound type in import JSON: %j",
+    (type) => {
+      const valid = parseTaxonomySheet(
+        input("syrinscapeSoundType: Element"),
+        options,
+      );
+      if (!valid.success) throw new Error(JSON.stringify(valid.issues));
+      const artifacts = valid.config.artifacts.map((artifact) =>
+        artifact.kind === "playlistSound"
+          ? {
+              ...artifact,
+              metadata: { ...artifact.metadata, syrinscapeSoundType: type },
+            }
+          : artifact,
+      );
+      expect(
+        parseAdaptationConfigJson(
+          JSON.stringify({ ...valid.config, artifacts }),
+        ),
+      ).toMatchObject({
+        success: false,
+        issues: [
+          {
+            path: "artifacts[1].metadata.syrinscapeSoundType",
+            message: 'Expected "Element" or "Mood".',
+          },
+        ],
+      });
+    },
+  );
   test.each([
     "syrinscapeSoundID: 123456,\nsyrinscapeSoundType: 'Element'",
     "syrinscape sound type: Element\nsyrinscape sound id: 123456",
@@ -71,6 +119,8 @@ describe("Syrinscape sound metadata", () => {
     "syrinscapeSoundID: 1.5",
     "syrinscapeSoundID: 9007199254740992",
     "syrinscapeSoundType: ''",
+    "syrinscapeSoundType: Music",
+    "syrinscapeSoundType: element",
     '{"syrinscapeSoundID":"123456"}',
     '{"syrinscapeSoundType":123}',
     "syrinscapeSoundID: 1\nsyrinscapeSoundID: 2",

@@ -44,10 +44,10 @@ columns. Dataset remains a reserved ingestion field. Custom values participate
 in fingerprints but are not automatically mapped to Foundry geometry or flags.
 
 Support `syrinscapeSoundID` as a positive safe integer and `syrinscapeSoundType`
-as a nonblank string on playlist sound metadata. The sheet accepts JSON objects
-or comma/newline-separated key/value entries, including the original spaced
-labels. Duplicate key/value entries and invalid known fields are errors.
-Preserve these values in JSON, fingerprints, and module flags. Playback
+as exactly `Element` or `Mood` on playlist sound metadata. The sheet accepts
+JSON objects or comma/newline-separated key/value entries, including the
+original spaced labels. Duplicate key/value entries and invalid known fields are
+errors. Preserve these values in JSON, fingerprints, and module flags. Playback
 integration is outside DAC-25.
 
 Run all mapped output through the existing structural and semantic JSON parser.

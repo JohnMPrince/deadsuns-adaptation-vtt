@@ -29,7 +29,7 @@ export interface ArtifactMetadata {
   readonly part?: string;
   /** Optional Syrinscape identifiers for playlist sounds. */
   readonly syrinscapeSoundID?: number;
-  readonly syrinscapeSoundType?: string;
+  readonly syrinscapeSoundType?: "Element" | "Mood";
 }
 
 interface ArtifactDefinition<K extends ArtifactKind, C extends ArtifactCode> {

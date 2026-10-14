@@ -164,12 +164,15 @@ function inspectOptionalMetadata(
     }
   }
   if (Object.hasOwn(value, "syrinscapeSoundType")) {
-    requireNonblankString(
-      value,
-      "syrinscapeSoundType",
-      `${path}.syrinscapeSoundType`,
-      issues,
-    );
+    if (
+      value.syrinscapeSoundType !== "Element" &&
+      value.syrinscapeSoundType !== "Mood"
+    ) {
+      issues.push({
+        path: `${path}.syrinscapeSoundType`,
+        message: 'Expected "Element" or "Mood".',
+      });
+    }
   }
   if (Object.hasOwn(value, "dataset")) {
     issues.push({
