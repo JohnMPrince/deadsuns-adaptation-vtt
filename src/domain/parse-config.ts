@@ -67,6 +67,16 @@ function inspectArtifact(
   requireNonblankString(value, "taxonomyId", `${path}.taxonomyId`, issues);
   requireNonblankString(value, "name", `${path}.name`, issues);
   inspectOptionalMetadata(value.metadata, `${path}.metadata`, issues);
+  if (isRecord(value.metadata)) {
+    for (const key of ["syrinscapeSoundID", "syrinscapeSoundType"] as const) {
+      if (Object.hasOwn(value.metadata, key) && kind !== "playlistSound") {
+        issues.push({
+          path: `${path}.metadata.${key}`,
+          message: "Syrinscape metadata is supported only on playlist sounds.",
+        });
+      }
+    }
+  }
   inspectOptionalStringArray(value.tags, `${path}.tags`, issues);
   inspectOptionalAssets(value.assets, `${path}.assets`, issues);
 
@@ -125,6 +135,23 @@ function inspectOptionalMetadata(
   }
   for (const key of ["containerPath", "chapter", "part"] as const) {
     inspectOptionalString(value, key, `${path}.${key}`, issues);
+  }
+  if (Object.hasOwn(value, "syrinscapeSoundID")) {
+    const id = value.syrinscapeSoundID;
+    if (typeof id !== "number" || !Number.isSafeInteger(id) || id <= 0) {
+      issues.push({
+        path: `${path}.syrinscapeSoundID`,
+        message: "Expected a positive safe integer.",
+      });
+    }
+  }
+  if (Object.hasOwn(value, "syrinscapeSoundType")) {
+    requireNonblankString(
+      value,
+      "syrinscapeSoundType",
+      `${path}.syrinscapeSoundType`,
+      issues,
+    );
   }
   if (Object.hasOwn(value, "dataset")) {
     issues.push({

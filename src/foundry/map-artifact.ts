@@ -33,6 +33,14 @@ export function mapArtifactToFoundry(
       "deadsuns-adaptation-vtt": {
         taxonomyId: artifact.taxonomyId,
         importedFingerprint: fingerprint,
+        ...(artifact.kind === "playlistSound" &&
+        artifact.metadata?.syrinscapeSoundID !== undefined
+          ? { syrinscapeSoundID: artifact.metadata.syrinscapeSoundID }
+          : {}),
+        ...(artifact.kind === "playlistSound" &&
+        artifact.metadata?.syrinscapeSoundType !== undefined
+          ? { syrinscapeSoundType: artifact.metadata.syrinscapeSoundType }
+          : {}),
       },
     },
   };

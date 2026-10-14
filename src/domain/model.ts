@@ -18,6 +18,9 @@ export interface ArtifactMetadata {
   readonly containerPath?: string;
   readonly chapter?: string;
   readonly part?: string;
+  /** Optional Syrinscape identifiers for playlist sounds. */
+  readonly syrinscapeSoundID?: number;
+  readonly syrinscapeSoundType?: string;
 }
 
 interface ArtifactDefinition<K extends ArtifactKind, C extends ArtifactCode> {
