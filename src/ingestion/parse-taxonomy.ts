@@ -5,7 +5,7 @@ import { parseAdaptationConfigJson } from "../domain/parse-serialized-config.ts"
 import { parseTaxonomyId } from "../domain/taxonomy-id.ts";
 import type { ValidationIssue } from "../domain/validation-issue.ts";
 import { parseDelimitedSheet, type SheetRow } from "./parse-delimited.ts";
-import { parseSoundMetadata } from "./parse-sound-metadata.ts";
+import { parseMetadata } from "./parse-metadata.ts";
 
 export interface TaxonomyParseOptions {
   readonly campaign: string;
@@ -143,16 +143,27 @@ export function parseTaxonomyRows(
         asset.role === "markdown" ? { ...asset, role: "content" } : asset,
       );
     }
-    const soundMetadata =
-      id.artifactCode === "AUD"
-        ? parseSoundMetadata(raw("Metadata"), `${path}.Metadata`, issues)
-        : {};
-    if (value("Metadata") && id.artifactCode !== "AUD")
-      issues.push({
-        path: `${path}.Metadata`,
-        message:
-          "Free-form Metadata has no mapping in the import contract; move required values into supported columns.",
-      });
+    const extraMetadata = parseMetadata(
+      raw("Metadata"),
+      `${path}.Metadata`,
+      issues,
+    );
+    for (const [key, column] of [
+      ["containerPath", "Container Path"],
+      ["chapter", "Chapter"],
+      ["part", "Part"],
+    ] as const) {
+      if (
+        value(column) &&
+        Object.hasOwn(extraMetadata, key) &&
+        extraMetadata[key] !== value(column)
+      ) {
+        issues.push({
+          path: `${path}.Metadata.${key}`,
+          message: `Conflicts with the ${column} column.`,
+        });
+      }
+    }
     if (issues.length !== start) continue;
     const metadata = {
       ...Object.fromEntries<string>(
@@ -164,7 +175,7 @@ export function parseTaxonomyRows(
           ] satisfies [string, string][]
         ).filter(([, entry]) => entry),
       ),
-      ...soundMetadata,
+      ...extraMetadata,
     };
     artifacts.push({
       kind: artifactCodeDefinitions[id.artifactCode].kind,

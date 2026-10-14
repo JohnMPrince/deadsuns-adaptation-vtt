@@ -135,18 +135,35 @@ supported. Redundant identity columns must agree with Taxonomy ID.
 
 Artifact kinds come from the existing taxonomy catalogue. Container Path,
 Chapter, and Part map to domain metadata. Dataset is an exact, case-sensitive
-ingestion filter and never appears in JSON. On AUD rows, Metadata accepts
-`syrinscapeSoundID` (a positive safe integer) and `syrinscapeSoundType` (a
-nonblank string). Supply a JSON object or comma/newline-separated `key: value`
-entries, for example
+ingestion filter and never appears in JSON. Metadata is an extensible JSON
+dictionary on every artifact type: unknown keys are preserved, including nested
+objects and arrays. Known fields retain their validation. On AUD rows, this
+includes `syrinscapeSoundID` (a positive safe integer) and `syrinscapeSoundType`
+(a nonblank string). Supply a JSON object or comma/newline-separated
+`key: value` entries, for example
 `syrinscapeSoundID: 123456, syrinscapeSoundType: 'Element'`. The original labels
 `syrinscape sound id` and `syrinscape sound type` are also accepted. These
 fields merge with container/chapter/part metadata, survive JSON serialization,
 affect fingerprints, and are preserved in the imported track's
 `deadsuns-adaptation-vtt` flags. This stores identifiers; it does not initiate
-Syrinscape playback. Unknown, duplicate, or invalid Metadata entries are errors;
-nonblank Metadata on other artifact types is unsupported. No scene actor/journal
-relationships are inferred from row proximity.
+Syrinscape playback. Duplicate key/value entries and invalid known fields are
+errors. Metadata values for containerPath, chapter, and part must agree with any
+nonblank dedicated columns. Dataset remains reserved for ingestion filtering. No
+scene actor/journal relationships are inferred from row proximity.
+
+For future scene composition, a Metadata cell can contain, for example:
+
+```json
+{
+  "walls": [{ "coordinates": [0, 10, 200, 10] }],
+  "doors": [{ "wall": 0, "state": "closed" }]
+}
+```
+
+These custom values survive JSON serialization and participate in fingerprints.
+This preserves the data for future scene mapping; it does not yet create Foundry
+walls or doors. New metadata can be retained immediately, with typed fields and
+specific validation added when their meaning is defined.
 
 Asset Path uses the existing `<role>: <path>` parser and preserves asset order,
 duplicates, and path contents. For journal pages, `markdown` becomes `content`

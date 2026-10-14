@@ -256,7 +256,7 @@ describe("taxonomy spreadsheet mapping", () => {
       }).success,
     ).toBe(false);
   });
-  test("reports malformed assets and unsupported Metadata at source rows", () => {
+  test("reports malformed assets and Metadata at source rows", () => {
     expect(
       parseTaxonomySheet(
         sheet([row("NPC", "01.01.01.00", "Bad", "portrait:")]),
@@ -273,9 +273,7 @@ describe("taxonomy spreadsheet mapping", () => {
     });
     expect(
       parseTaxonomySheet(
-        sheet([
-          row("NPC", "01.01.01.00", "Bad", "", "syrinscape sound id: TBA"),
-        ]),
+        sheet([row("NPC", "01.01.01.00", "Bad", "", "{invalid}")]),
         options,
       ),
     ).toMatchObject({ success: false, issues: [{ path: "rows[2].Metadata" }] });

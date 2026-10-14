@@ -74,12 +74,9 @@ describe("Syrinscape sound metadata", () => {
     '{"syrinscapeSoundID":"123456"}',
     '{"syrinscapeSoundType":123}',
     "syrinscapeSoundID: 1\nsyrinscapeSoundID: 2",
-    "unknown: value",
-    "constructor: value",
-    "__proto__: value",
     "not metadata",
     "{invalid}",
-  ])("rejects malformed or unsupported metadata: %s", (metadata) => {
+  ])("rejects malformed or invalid known metadata: %s", (metadata) => {
     const result = parseTaxonomySheet(input(metadata), options);
     expect(result.success).toBe(false);
     if (result.success) throw new Error("Expected invalid metadata.");

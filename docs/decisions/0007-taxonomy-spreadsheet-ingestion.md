@@ -35,11 +35,20 @@ use a unique journal sharing their first two Index segments, as agreed for the
 Locations pages. Ambiguous and missing owners are errors. Library callers can
 supply explicit owners or require explicit journal ownership.
 
+Treat artifact metadata as an extensible dictionary of JSON-compatible values.
+Preserve unknown keys on all artifact types, including nested objects and arrays
+for future scene geometry. Keep typed known fields and their existing
+validation; new fields can acquire stronger validation as their domain meaning
+is defined. Reject conflicting placement values between Metadata and dedicated
+columns. Dataset remains a reserved ingestion field. Custom values participate
+in fingerprints but are not automatically mapped to Foundry geometry or flags.
+
 Support `syrinscapeSoundID` as a positive safe integer and `syrinscapeSoundType`
 as a nonblank string on playlist sound metadata. The sheet accepts JSON objects
 or comma/newline-separated key/value entries, including the original spaced
-labels. Unknown or duplicate entries are errors. Preserve these values in JSON,
-fingerprints, and module flags. Playback integration is outside DAC-25.
+labels. Duplicate key/value entries and invalid known fields are errors.
+Preserve these values in JSON, fingerprints, and module flags. Playback
+integration is outside DAC-25.
 
 Run all mapped output through the existing structural and semantic JSON parser.
 Return errors with physical row locations and workbook sheet names. The CLI
@@ -50,8 +59,8 @@ Foundry itself.
 
 - Existing adaptation configurations remain valid.
 - Import validation and relationship rules have a single implementation.
-- Missing assets and unsupported free-form Metadata require source corrections;
-  ingestion does not manufacture values or silently discard metadata.
+- Missing assets and malformed Metadata require source corrections; ingestion
+  does not manufacture values or silently discard custom metadata.
 - Automated fixtures establish workbook handling and mapped import contracts.
   Validation against the user's complete saved workbook remains a separate
   acceptance step once that file is provided.

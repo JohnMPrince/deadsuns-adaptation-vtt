@@ -133,6 +133,24 @@ function inspectOptionalMetadata(
     issues.push({ path, message: "Expected an object." });
     return;
   }
+  if (
+    Object.getPrototypeOf(value) !== Object.prototype &&
+    Object.getPrototypeOf(value) !== null
+  ) {
+    issues.push({
+      path,
+      message: "Expected a JSON-compatible metadata object.",
+    });
+    return;
+  }
+  for (const [key, entry] of Object.entries(value)) {
+    if (
+      entry === undefined &&
+      ["containerPath", "chapter", "part"].includes(key)
+    )
+      continue;
+    inspectMetadataValue(entry, `${path}.${key}`, issues, new Set());
+  }
   for (const key of ["containerPath", "chapter", "part"] as const) {
     inspectOptionalString(value, key, `${path}.${key}`, issues);
   }
@@ -160,6 +178,52 @@ function inspectOptionalMetadata(
         "Dataset is a source-ingestion filter and is not part of artifact metadata.",
     });
   }
+}
+
+function inspectMetadataValue(
+  value: unknown,
+  path: string,
+  issues: ValidationIssue[],
+  ancestors: Set<object>,
+): void {
+  if (value === null || typeof value === "string" || typeof value === "boolean")
+    return;
+  if (typeof value === "number" && Number.isFinite(value)) return;
+  if (
+    typeof value !== "object" ||
+    (!Array.isArray(value) &&
+      Object.getPrototypeOf(value) !== Object.prototype &&
+      Object.getPrototypeOf(value) !== null)
+  ) {
+    issues.push({
+      path,
+      message: "Expected a JSON-compatible metadata value.",
+    });
+    return;
+  }
+  if (ancestors.has(value)) {
+    issues.push({
+      path,
+      message: "Metadata must not contain circular references.",
+    });
+    return;
+  }
+  ancestors.add(value);
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index++) {
+      const entry: unknown = value[index];
+      inspectMetadataValue(
+        entry,
+        `${path}[${String(index)}]`,
+        issues,
+        ancestors,
+      );
+    }
+  } else {
+    for (const [key, entry] of Object.entries(value))
+      inspectMetadataValue(entry, `${path}.${key}`, issues, ancestors);
+  }
+  ancestors.delete(value);
 }
 
 function inspectOptionalStringArray(
