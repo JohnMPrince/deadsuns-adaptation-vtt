@@ -921,8 +921,6 @@ packages:
     resolution: {integrity: sha512-benNAoQbe5HqoTi3qrQkR8wMeHq0gVWLt2Br73hVvmBPGdzMf9OLGsps/812AfZ+bvzVYsUyhF77Y3o4B51yCA==}
     engines: {node: '>=18'}
 
-  rolldown@1.2.12:
-    resolution: {integrity: sha512-8wafseiaG80xmXSfqidUNqZcylTlhmPZZt+za2m+js2sFZ8dTNlhIOV2WcbIPx2hgwPBJpEUGFAMZ9bgBBLTSQ==}
   rolldown@1.2.13:
     resolution: {integrity: sha512-/5apOkwWxtACcQtZ5WlrAsKS4JwXVThQPJZ3RqIruRY9UG9M8e0VlXN068xum/JRKA4aIUoJ13ghe/kGCvidiQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1889,7 +1887,6 @@ snapshots:
       unzipper-esm: 0.13.3
       worker-f: 0.1.20
 
-  rolldown@1.2.12:
   rolldown@1.2.13:
     dependencies:
       '@oxc-project/types': 0.153.0
