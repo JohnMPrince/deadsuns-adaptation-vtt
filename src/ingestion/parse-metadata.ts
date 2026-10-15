@@ -15,6 +15,7 @@ export function parseMetadata(
         throw new Error("Metadata must be a JSON object.");
       entries = Object.entries(value);
     } else {
+      // Also accept the sheet's compact key: value notation without evaluating code.
       entries = splitEntries(input).map((line) => {
         const separator = line.indexOf(":");
         if (separator < 0)
@@ -22,6 +23,7 @@ export function parseMetadata(
         const key = line.slice(0, separator).trim();
         if (!key) throw new Error("Metadata keys must be nonblank.");
         const raw = line.slice(separator + 1).trim();
+        // Recognizable JSON literals retain their types; unquoted prose stays text.
         let value: unknown;
         if (raw.startsWith("'")) {
           if (!raw.endsWith("'") || raw.length < 2)
@@ -56,6 +58,8 @@ export function parseMetadata(
     "syrinscape sound id": "syrinscapeSoundID",
     "syrinscape sound type": "syrinscapeSoundType",
   };
+  // Normalize legacy Syrinscape labels before detecting duplicate keys. A Map
+  // also keeps arbitrary dictionary keys separate from object prototype members.
   const result = new Map<string, unknown>();
   for (const [key, value] of entries) {
     const canonical = Object.hasOwn(aliases, key) ? (aliases[key] ?? key) : key;
@@ -86,6 +90,7 @@ function splitEntries(input: string): string[] {
       else if (char === quote) quote = "";
       continue;
     }
+    // An apostrophe within unquoted prose (A Maestro's Symphony) is not a quote.
     if (
       char === '"' ||
       (char === "'" && /(?:^|[:[{,])\s*$/.test(input.slice(start, index)))

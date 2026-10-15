@@ -143,6 +143,8 @@ function inspectOptionalMetadata(
     });
     return;
   }
+  // Unknown metadata is allowed, but every value must survive JSON serialization.
+  // Known fields receive their more specific checks below.
   for (const [key, entry] of Object.entries(value)) {
     if (
       entry === undefined &&
@@ -211,6 +213,7 @@ function inspectMetadataValue(
     });
     return;
   }
+  // Track only the current traversal branch: shared objects are valid, cycles are not.
   ancestors.add(value);
   if (Array.isArray(value)) {
     for (let index = 0; index < value.length; index++) {

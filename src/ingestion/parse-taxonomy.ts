@@ -103,6 +103,7 @@ export function parseTaxonomyRows(
     }
     const raw = (name: string) => row.cells[headers.indexOf(name)] ?? "";
     const value = (name: string) => raw(name).trim();
+    // Excluded datasets must not introduce artifact or relationship validation errors.
     if (options.dataset !== undefined && value("Dataset") !== options.dataset)
       continue;
     const start = issues.length;
@@ -120,6 +121,7 @@ export function parseTaxonomyRows(
       issues.push({ path: `${path}.Taxonomy ID`, message: messageOf(error) });
       continue;
     }
+    // The ID is authoritative; reject redundant columns that disagree with it.
     for (const [column, expected] of [
       ["Campaign", id.campaign],
       ["Taxonomy Code", id.artifactCode],
@@ -138,6 +140,7 @@ export function parseTaxonomyRows(
       issues.push({ path: `${path}.Asset Path`, message: messageOf(error) });
       continue;
     }
+    // The sheet calls this role "markdown"; the importer loads files via "content".
     if (options.normalizeMarkdownRole !== false && id.artifactCode === "JPG") {
       assets = assets.map((asset) =>
         asset.role === "markdown" ? { ...asset, role: "content" } : asset,
@@ -164,7 +167,11 @@ export function parseTaxonomyRows(
         });
       }
     }
+    // Keep collecting row errors, but do not construct artifacts from invalid rows.
     if (issues.length !== start) continue;
+    // Omit blank placement columns, then merge the extensible Metadata dictionary.
+    // `satisfies` checks the key/value tuple types at compile time; it does not
+    // validate JSON. Conflicts with dedicated columns have already been rejected.
     const metadata = {
       ...Object.fromEntries<string>(
         (
@@ -208,6 +215,8 @@ export function parseTaxonomyRows(
         (entry) => entry.taxonomyId === exact,
       );
       if (exactMatches.length === 1) owner = exact;
+      // Locations pages use 08.03.xx.00 beneath journal 08.03.01.00.
+      // Only a unique two-segment match is safe when the exact owner is absent.
       if (exactMatches.length === 0 && artifact.kind === "journalPage") {
         const candidates = artifacts.filter((entry) => {
           const candidate = parseTaxonomyId(String(entry.taxonomyId));
@@ -229,6 +238,8 @@ export function parseTaxonomyRows(
       });
     else artifact[field] = { taxonomyId: owner };
   }
+  // Reuse the importer's validation boundary so spreadsheet output follows the
+  // same structural and relationship rules as configurations supplied as JSON.
   const result = parseAdaptationConfigJson(
     JSON.stringify({
       campaign: options.campaign,
@@ -240,6 +251,7 @@ export function parseTaxonomyRows(
     issues.push(
       ...result.issues.map((issue) => ({
         ...issue,
+        // Artifact indexes omit blank/filtered rows; translate back to source rows.
         path: issue.path.replace(
           /^artifacts\[(\d+)\]/,
           (_, index: string) => `rows[${String(sourceRows[Number(index)])}]`,

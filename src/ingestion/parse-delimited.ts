@@ -19,8 +19,10 @@ export function parseDelimitedSheet(
   let cells: string[] = [];
   let cell = "";
   let quoted = false;
+  // After a closing quote, only a separator, row ending, or EOF is permitted.
   let closed = false;
   let line = 1;
+  // Keep the record's starting line even when a quoted cell spans several lines.
   let row = 1;
   const failure = (message: string): DelimitedResult => ({
     success: false,
@@ -31,6 +33,7 @@ export function parseDelimitedSheet(
     if (char === '"') {
       if (quoted) {
         if (text[index + 1] === '"') {
+          // CSV/TSV escapes a literal quote by doubling it inside a quoted cell.
           cell += '"';
           index++;
         } else {
@@ -47,6 +50,7 @@ export function parseDelimitedSheet(
       if (newline.length === 2) index++;
       line++;
       if (quoted) {
+        // A quoted line break belongs to the cell, not to a new spreadsheet row.
         cell += newline;
       } else {
         cells.push(cell);
