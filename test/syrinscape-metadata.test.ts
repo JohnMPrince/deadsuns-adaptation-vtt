@@ -109,9 +109,37 @@ describe("Syrinscape sound metadata", () => {
           syrinscapeSoundID: 123456,
           syrinscapeSoundType: "Element",
         },
+        "syrinscape-control": { soundId: "123456", soundType: "element" },
       });
     },
   );
+  test.each(["Element", "Mood"] as const)(
+    "maps %s to the installed Controller's form and playback flags",
+    (type) => {
+      const result = parseTaxonomySheet(
+        input(`syrinscapeSoundID: 123456\nsyrinscapeSoundType: ${type}`),
+        options,
+      );
+      if (!result.success) throw new Error(JSON.stringify(result.issues));
+      const sound = result.config.artifacts[1];
+      if (!sound) throw new Error("Missing sound.");
+      expect(mapArtifactToFoundry(sound, "test").data.flags).toMatchObject({
+        "syrinscape-control": {
+          soundId: "123456",
+          soundType: type.toLowerCase(),
+        },
+      });
+    },
+  );
+  test("leaves ordinary audio tracks without Controller flags", () => {
+    const result = parseTaxonomySheet(input(""), options);
+    if (!result.success) throw new Error(JSON.stringify(result.issues));
+    const sound = result.config.artifacts[1];
+    if (!sound) throw new Error("Missing sound.");
+    expect(mapArtifactToFoundry(sound, "test").data.flags).not.toHaveProperty(
+      "syrinscape-control",
+    );
+  });
   test.each([
     "syrinscapeSoundID: TBA",
     "syrinscapeSoundID: -1",

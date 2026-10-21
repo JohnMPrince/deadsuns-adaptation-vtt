@@ -145,11 +145,20 @@ comma/newline-separated `key: value` entries, for example
 `syrinscape sound id` and `syrinscape sound type` are also accepted. These
 fields merge with container/chapter/part metadata, survive JSON serialization,
 affect fingerprints, and are preserved in the imported track's
-`deadsuns-adaptation-vtt` flags. This stores identifiers; it does not initiate
-Syrinscape playback. Duplicate key/value entries and invalid known fields are
-errors. Metadata values for containerPath, chapter, and part must agree with any
-nonblank dedicated columns. Dataset remains reserved for ingestion filtering. No
-scene actor/journal relationships are inferred from row proximity.
+`deadsuns-adaptation-vtt` flags. Tracks also receive Syrinscape Controller's
+`flags["syrinscape-control"].soundId` (string) and `.soundType` (`element` or
+`mood`), which populate its configuration fields and let that module handle
+playback when the track is played. This mapping follows Controller 1.1.0; live
+playback still depends on the Controller being enabled and configured. Duplicate
+key/value entries and invalid known fields are errors. Metadata values for
+containerPath, chapter, and part must agree with any nonblank dedicated columns.
+Dataset remains reserved for ingestion filtering. No scene actor/journal
+relationships are inferred from row proximity.
+
+Existing imported tracks are not repaired by this mapping change: unchanged
+repeat imports do not rewrite their flags. Rebuild and reinstall the module,
+then test with fresh taxonomy IDs or a fresh disposable world. The JSON must
+contain the Syrinscape metadata for the track being tested.
 
 For future scene composition, a Metadata cell can contain, for example:
 
