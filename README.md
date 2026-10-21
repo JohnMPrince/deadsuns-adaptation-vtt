@@ -106,6 +106,92 @@ and
 
 ## Development
 
+### Taxonomy spreadsheet parser (DAC-25)
+
+Read an Excel workbook directly, or use a UTF-8 TSV/CSV export:
+
+```sh
+pnpm taxonomy:parse taxonomy.xlsx adaptation.json DS "Dead Suns Adaptation" Initial --sheet "Taxonomy"
+pnpm taxonomy:parse taxonomy.tsv adaptation.json DS "Dead Suns Adaptation" Initial
+```
+
+The final Dataset argument is optional. Without it, all rows are included. The
+command reports errors to stderr, exits with status 1 on failure, and writes
+JSON only when the entire selected configuration passes the existing structural
+and semantic validation. It refuses to overwrite an existing output file. For
+`.xlsx`, `--sheet` selects a worksheet by its exact name. Without it, the parser
+reads the only worksheet or the worksheet named `Taxonomy`. Ambiguous workbooks
+require an explicit choice. Taxonomy cells must be text; numeric and date cells
+are rejected to preserve IDs and indexes with leading zeros. Sparse blank cells
+are supported. Formula cells use cached workbook values; the reader does not
+calculate formulas. No Foundry session is needed.
+
+Required headers are `Taxonomy ID`, `Campaign`, `Taxonomy Code`, `Index`, and
+`Artifact Name`. Optional headers are `Asset Path`, `Container Path`, `Chapter`,
+`Part`, `Metadata`, and `Dataset`. Header order may vary; surrounding whitespace
+is trimmed. Unknown or duplicate headers and incorrect row widths are errors.
+Blank rows are skipped. Quoted multiline cells and escaped double quotes are
+supported. Redundant identity columns must agree with Taxonomy ID.
+
+Artifact kinds come from the existing taxonomy catalogue. Container Path,
+Chapter, and Part map to domain metadata. Dataset is an exact, case-sensitive
+ingestion filter and never appears in JSON. Metadata is an extensible JSON
+dictionary on every artifact type: unknown keys are preserved, including nested
+objects and arrays. Known fields retain their validation. On AUD rows, this
+includes `syrinscapeSoundID` (a positive safe integer) and `syrinscapeSoundType`
+(`Element` or `Mood`, case-sensitive). Supply a JSON object or
+comma/newline-separated `key: value` entries, for example
+`syrinscapeSoundID: 123456, syrinscapeSoundType: 'Element'`. The original labels
+`syrinscape sound id` and `syrinscape sound type` are also accepted. These
+fields merge with container/chapter/part metadata, survive JSON serialization,
+affect fingerprints, and are preserved in the imported track's
+`deadsuns-adaptation-vtt` flags. This stores identifiers; it does not initiate
+Syrinscape playback. Duplicate key/value entries and invalid known fields are
+errors. Metadata values for containerPath, chapter, and part must agree with any
+nonblank dedicated columns. Dataset remains reserved for ingestion filtering. No
+scene actor/journal relationships are inferred from row proximity.
+
+For future scene composition, a Metadata cell can contain, for example:
+
+```json
+{
+  "walls": [{ "coordinates": [0, 10, 200, 10] }],
+  "doors": [{ "wall": 0, "state": "closed" }]
+}
+```
+
+These custom values survive JSON serialization and participate in fingerprints.
+This preserves the data for future scene mapping; it does not yet create Foundry
+walls or doors. New metadata can be retained immediately, with typed fields and
+specific validation added when their meaning is defined.
+
+Asset Path uses the existing `<role>: <path>` parser and preserves asset order,
+duplicates, and path contents. For journal pages, `markdown` becomes `content`
+to match DAC-24's file-loading role. Missing assets are omitted. Pages have an
+empty inline `markdown` fallback. Audio rows require an `audio` asset; its path
+also supplies the required legacy `source` field. Blank audio paths remain
+validation errors rather than fabricated placeholders.
+
+The agreed default ownership convention is based on the Index encoded in each
+taxonomy ID, never row order. JPG artifacts become embedded journal pages:
+`DS-JPG-01.01.01.01` belongs to `DS-JRN-01.01.01.00`, and `DS-AUD-08.15.01.01`
+belongs to `DS-PLY-08.15.01.00`. When a page has no exact journal match, a
+unique journal sharing its first two index segments is used:
+`DS-JPG-08.03.02.00` therefore belongs to `DS-JRN-08.03.01.00` (Locations).
+Missing or ambiguous owners are errors. The library accepts explicit owner
+overrides and can disable inferred journal ownership with
+`journalOwnership: "explicit"`. Owner targets still pass existing reference and
+container validation.
+
+`parseTaxonomySheet(text, options)` returns either
+`{ success: true, config, json }` or `{ success: false, issues }`. Issues
+identify physical source lines (including line breaks inside quoted cells) and
+fields. `parseTaxonomyRows` accepts worksheet rows with source row numbers for
+workbook adapters. Both functions are exported from `src/index.ts`.
+`readTaxonomyFile(path, options)` in `src/ingestion/read-taxonomy-file.ts` is
+the Node file adapter and adds worksheet names to workbook error locations. The
+Node command and Excel dependency are separate from the Foundry browser entry.
+
 ```sh
 pnpm install
 pnpm quality
