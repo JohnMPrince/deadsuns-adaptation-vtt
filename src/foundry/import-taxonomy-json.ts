@@ -24,7 +24,7 @@ export class TaxonomyJsonValidationError extends Error {
   }
 }
 
-/** Import DAC-25 output using the existing validation and creation-only engine. */
+/** Import taxonomy parser JSON using the existing validation and creation-only engine. */
 export async function executeTaxonomyJson(
   json: string,
   gateway?: FoundryImportGateway,
