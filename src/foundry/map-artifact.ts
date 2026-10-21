@@ -116,37 +116,14 @@ export function mapArtifactToFoundry(
         undefined,
         artifact.metadata?.containerPath,
       );
-    case "playlistSound": {
-      const soundId = artifact.metadata?.syrinscapeSoundID;
-      const soundType = artifact.metadata?.syrinscapeSoundType;
+    case "playlistSound":
       return mapped(
         artifact.taxonomyId,
         "PlaylistSound",
-        {
-          ...common,
-          path: asset("audio") ?? artifact.source,
-          flags: {
-            ...common.flags,
-            // Syrinscape Controller reads its own flags for both the form and playback.
-            // Match its string ID and lowercase type while retaining our source metadata.
-            ...(soundId !== undefined || soundType !== undefined
-              ? {
-                  "syrinscape-control": {
-                    ...(soundId !== undefined
-                      ? { soundId: String(soundId) }
-                      : {}),
-                    ...(soundType !== undefined
-                      ? { soundType: soundType.toLowerCase() }
-                      : {}),
-                  },
-                }
-              : {}),
-          },
-        },
+        { ...common, path: asset("audio") ?? artifact.source },
         artifact.playlist.taxonomyId,
         artifact.metadata?.containerPath,
       );
-    }
     case "item":
       return mapped(
         artifact.taxonomyId,

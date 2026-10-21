@@ -47,12 +47,8 @@ Support `syrinscapeSoundID` as a positive safe integer and `syrinscapeSoundType`
 as exactly `Element` or `Mood` on playlist sound metadata. The sheet accepts
 JSON objects or comma/newline-separated key/value entries, including the
 original spaced labels. Duplicate key/value entries and invalid known fields are
-errors. Preserve these values in JSON, fingerprints, and module flags. Also map
-them to Syrinscape Controller 1.1.0's `syrinscape-control` flags: `soundId` as a
-string and `soundType` as lowercase `element` or `mood`. These are the fields
-used by its track configuration form and playback override. The Controller
-handles playback; this importer does not call Syrinscape services. Existing
-unchanged tracks retain their flags, so verify this mapping on fresh imports.
+errors. Preserve these values in JSON, fingerprints, and module flags. Playback
+integration is outside DAC-25.
 
 Run all mapped output through the existing structural and semantic JSON parser.
 Return errors with physical row locations and workbook sheet names. The CLI
