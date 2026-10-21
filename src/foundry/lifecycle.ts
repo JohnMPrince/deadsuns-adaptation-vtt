@@ -6,6 +6,7 @@ import {
 import { planImport } from "../import/plan-import.ts";
 import { dac18SampleConfig } from "../config/dac-18-sample.ts";
 import { importConfiguredAssets } from "./import-config.ts";
+import { importTaxonomyJson } from "./import-taxonomy-json.ts";
 import {
   FoundryVttGateway,
   type FoundryVttRuntime,
@@ -17,6 +18,7 @@ export const moduleApi = Object.freeze({
   parseAdaptationConfigJson,
   dac18SampleConfig,
   importConfiguredAssets,
+  importTaxonomyJson,
   importDac18Sample: () =>
     importConfiguredAssets(
       dac18SampleConfig,

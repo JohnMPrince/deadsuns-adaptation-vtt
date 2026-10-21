@@ -335,3 +335,35 @@ writes.
 See [ADR 0006](docs/decisions/0006-configured-asset-mapping.md) for field
 mappings and the decisions behind these defaults. Automated tests use a Foundry
 runtime double; live Foundry verification has not yet been performed for DAC-24.
+
+## Developer Tools JSON import (DAC-26)
+
+After the world is ready, pass the JSON text produced by DAC-25 to the module
+API:
+
+```js
+const api = game.modules.get("deadsuns-adaptation-vtt").api;
+const json = await (await fetch("worlds/my-world/adaptation.json")).text();
+const result = await api.importTaxonomyJson(json);
+console.log(result.created, result.unchanged, result.plan);
+```
+
+Supply your own accessible JSON file path, or paste JSON as a string. The
+current Foundry user must be a GM; missing users and non-GMs receive an
+authorization failure before validation or world document access. The entry
+point is exposed at module initialization and can import once the world is
+ready.
+
+Calls resolve to an explicit result. Success returns `success: true`, `created`,
+`unchanged`, `plan`, and an empty `errors` array. Failure returns
+`success: false`, `stage` (authorization, input, syntax, structure, semantic, or
+import), and `errors` containing paths and messages. Failure results omit counts
+because a runtime failure can leave partial results whose totals are
+unavailable. Awaiting the function in Developer Tools displays this result
+without an unhandled rejection. No logging or notifications are added.
+
+The existing creation-only engine validates and plans before writing, skips
+unchanged repeats, and rejects updates and conflicts before writes. Rerun the
+same JSON after a partial failure to create remaining artifacts while retaining
+completed ones. No file picker, browser spreadsheet parser, automatic import, or
+new update capability is introduced.
