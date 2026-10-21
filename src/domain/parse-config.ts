@@ -67,6 +67,16 @@ function inspectArtifact(
   requireNonblankString(value, "taxonomyId", `${path}.taxonomyId`, issues);
   requireNonblankString(value, "name", `${path}.name`, issues);
   inspectOptionalMetadata(value.metadata, `${path}.metadata`, issues);
+  if (isRecord(value.metadata)) {
+    for (const key of ["syrinscapeSoundID", "syrinscapeSoundType"] as const) {
+      if (Object.hasOwn(value.metadata, key) && kind !== "playlistSound") {
+        issues.push({
+          path: `${path}.metadata.${key}`,
+          message: "Syrinscape metadata is supported only on playlist sounds.",
+        });
+      }
+    }
+  }
   inspectOptionalStringArray(value.tags, `${path}.tags`, issues);
   inspectOptionalAssets(value.assets, `${path}.assets`, issues);
 
@@ -123,8 +133,48 @@ function inspectOptionalMetadata(
     issues.push({ path, message: "Expected an object." });
     return;
   }
+  if (
+    Object.getPrototypeOf(value) !== Object.prototype &&
+    Object.getPrototypeOf(value) !== null
+  ) {
+    issues.push({
+      path,
+      message: "Expected a JSON-compatible metadata object.",
+    });
+    return;
+  }
+  // Unknown metadata is allowed, but every value must survive JSON serialization.
+  // Known fields receive their more specific checks below.
+  for (const [key, entry] of Object.entries(value)) {
+    if (
+      entry === undefined &&
+      ["containerPath", "chapter", "part"].includes(key)
+    )
+      continue;
+    inspectMetadataValue(entry, `${path}.${key}`, issues, new Set());
+  }
   for (const key of ["containerPath", "chapter", "part"] as const) {
     inspectOptionalString(value, key, `${path}.${key}`, issues);
+  }
+  if (Object.hasOwn(value, "syrinscapeSoundID")) {
+    const id = value.syrinscapeSoundID;
+    if (typeof id !== "number" || !Number.isSafeInteger(id) || id <= 0) {
+      issues.push({
+        path: `${path}.syrinscapeSoundID`,
+        message: "Expected a positive safe integer.",
+      });
+    }
+  }
+  if (Object.hasOwn(value, "syrinscapeSoundType")) {
+    if (
+      value.syrinscapeSoundType !== "Element" &&
+      value.syrinscapeSoundType !== "Mood"
+    ) {
+      issues.push({
+        path: `${path}.syrinscapeSoundType`,
+        message: 'Expected "Element" or "Mood".',
+      });
+    }
   }
   if (Object.hasOwn(value, "dataset")) {
     issues.push({
@@ -133,6 +183,53 @@ function inspectOptionalMetadata(
         "Dataset is a source-ingestion filter and is not part of artifact metadata.",
     });
   }
+}
+
+function inspectMetadataValue(
+  value: unknown,
+  path: string,
+  issues: ValidationIssue[],
+  ancestors: Set<object>,
+): void {
+  if (value === null || typeof value === "string" || typeof value === "boolean")
+    return;
+  if (typeof value === "number" && Number.isFinite(value)) return;
+  if (
+    typeof value !== "object" ||
+    (!Array.isArray(value) &&
+      Object.getPrototypeOf(value) !== Object.prototype &&
+      Object.getPrototypeOf(value) !== null)
+  ) {
+    issues.push({
+      path,
+      message: "Expected a JSON-compatible metadata value.",
+    });
+    return;
+  }
+  if (ancestors.has(value)) {
+    issues.push({
+      path,
+      message: "Metadata must not contain circular references.",
+    });
+    return;
+  }
+  // Track only the current traversal branch: shared objects are valid, cycles are not.
+  ancestors.add(value);
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index++) {
+      const entry: unknown = value[index];
+      inspectMetadataValue(
+        entry,
+        `${path}[${String(index)}]`,
+        issues,
+        ancestors,
+      );
+    }
+  } else {
+    for (const [key, entry] of Object.entries(value))
+      inspectMetadataValue(entry, `${path}.${key}`, issues, ancestors);
+  }
+  ancestors.delete(value);
 }
 
 function inspectOptionalStringArray(

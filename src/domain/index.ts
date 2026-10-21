@@ -17,6 +17,7 @@ export type {
   JournalDefinition,
   JournalPageDefinition,
   MacroDefinition,
+  MetadataValue,
   PlaylistDefinition,
   PlaylistSoundDefinition,
   RollTableDefinition,

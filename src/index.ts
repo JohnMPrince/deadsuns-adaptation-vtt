@@ -1,4 +1,13 @@
 export * from "./domain/index.ts";
+export {
+  parseTaxonomySheet,
+  parseTaxonomyRows,
+} from "./ingestion/parse-taxonomy.ts";
+export type {
+  TaxonomyParseOptions,
+  TaxonomyParseResult,
+} from "./ingestion/parse-taxonomy.ts";
+export type { SheetRow } from "./ingestion/parse-delimited.ts";
 export { fingerprintArtifact } from "./import/fingerprint.ts";
 export {
   InvalidAdaptationConfigError,
