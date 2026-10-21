@@ -1,6 +1,6 @@
-import type { ArtifactKind } from "./artifact-catalog.ts";
-import type { AdaptationConfig } from "./model.ts";
-import type { ValidationIssue } from "./validation-issue.ts";
+import type { ArtifactKind } from "../domain/artifact-catalog.ts";
+import type { AdaptationConfig } from "../domain/model.ts";
+import type { ValidationIssue } from "../domain/validation-issue.ts";
 
 /** Logical categories, with no dependency on Foundry classes. */
 export type ContainerCategory = Exclude<
@@ -52,6 +52,10 @@ export function validateContainers(
     const value = artifact.metadata?.containerPath;
     if (value === undefined) continue;
     const path = `artifacts[${String(index)}].metadata.containerPath`;
+    if (typeof value !== "string") {
+      issues.push({ path, message: "Expected a container path string." });
+      continue;
+    }
     let normalized;
     try {
       normalized = parseContainerPath(value).join("/");
@@ -76,7 +80,7 @@ export function validateContainers(
       let normalizedParent;
       try {
         normalizedParent =
-          parentPath === undefined
+          typeof parentPath !== "string"
             ? undefined
             : parseContainerPath(parentPath).join("/");
       } catch {
@@ -108,7 +112,7 @@ export function resolveContainerHierarchy(
     if (artifact.kind === "journalPage" || artifact.kind === "playlistSound")
       continue;
     const value = artifact.metadata?.containerPath;
-    if (value === undefined) continue;
+    if (typeof value !== "string") continue;
     let parentPath: string | undefined;
     for (const name of parseContainerPath(value)) {
       const path: string =

@@ -1,3 +1,4 @@
+import { validateContainers } from "./container-hierarchy.ts";
 import type { AdaptationConfig } from "../domain/model.ts";
 import type { TaxonomyId } from "../domain/taxonomy-id.ts";
 import { validateConfig } from "../domain/validate-config.ts";
@@ -39,7 +40,8 @@ export async function planImport(
   config: AdaptationConfig,
   existingArtifacts: readonly ExistingArtifactState[],
 ): Promise<ImportPlan> {
-  const issues = validateConfig(config);
+  const issues = [...validateConfig(config)];
+  if (issues.length === 0) issues.push(...validateContainers(config));
   if (issues.length > 0) {
     throw new InvalidAdaptationConfigError(issues);
   }
