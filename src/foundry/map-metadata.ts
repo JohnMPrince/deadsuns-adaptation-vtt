@@ -68,11 +68,12 @@ export function mapSyrinscapeMetadata(
   )
     fail("flat and nested values disagree.");
 
-  // Omit absent fields to support partial configuration without writing undefined.
+  // Resolve aliases together: playback needs a complete ID/type pair.
+  // With neither field supplied, there is no supported configuration to apply.
   const soundId = nestedId ?? flatId;
   const soundType = nestedType ?? flatType;
-  return {
-    ...(soundId === undefined ? {} : { soundId }),
-    ...(soundType === undefined ? {} : { soundType }),
-  };
+  if (soundId === undefined && soundType === undefined) return undefined;
+  if (soundId === undefined || soundType === undefined)
+    return fail("sound ID and sound type must be supplied together.");
+  return { soundId, soundType };
 }

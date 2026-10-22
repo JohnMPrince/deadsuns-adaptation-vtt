@@ -61,7 +61,11 @@ describe("Foundry VTT gateway", () => {
         artifact.kind === "playlistSound"
           ? {
               ...artifact,
-              metadata: { ...artifact.metadata, syrinscapeSoundID: 42 },
+              metadata: {
+                ...artifact.metadata,
+                syrinscapeSoundID: 42,
+                syrinscapeSoundType: "Mood",
+              },
             }
           : artifact,
       ),

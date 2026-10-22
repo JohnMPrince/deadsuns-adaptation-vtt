@@ -44,6 +44,10 @@ describe("DAC-28 metadata mapping", () => {
     { syrinscape: { soundType: "Music" } },
     { syrinscape: { soundType: "mood" }, syrinscapeSoundType: "Element" },
     { syrinscape: { soundId: "2" }, syrinscapeSoundID: 1 },
+    { syrinscapeSoundID: 42 },
+    { syrinscapeSoundType: "Mood" },
+    { syrinscape: { soundId: "42" } },
+    { syrinscape: { soundType: "mood" } },
   ])(
     "reports invalid supported metadata before writes: %j",
     async (metadata) => {
@@ -81,7 +85,7 @@ describe("DAC-28 metadata mapping", () => {
       ),
     ).toEqual(plain);
   });
-  test("accepts matching aliases and partial configuration", () => {
+  test("accepts matching aliases for a complete configuration", () => {
     expect(
       mapArtifactToFoundry(
         {
@@ -97,13 +101,42 @@ describe("DAC-28 metadata mapping", () => {
       soundId: "42",
       soundType: "mood",
     });
-    expect(
-      mapArtifactToFoundry(
-        { ...sound, metadata: { syrinscapeSoundType: "Mood" } },
-        "f",
-      ).data.flags,
-    ).toHaveProperty("syrinscape-control", { soundType: "mood" });
   });
+
+  test.each<ArtifactMetadata>([
+    { syrinscapeSoundID: 42, syrinscape: { soundType: "mood" } },
+    { syrinscapeSoundType: "Mood", syrinscape: { soundId: "42" } },
+  ])("accepts a complete pair split across aliases: %j", (metadata) => {
+    expect(
+      mapArtifactToFoundry({ ...sound, metadata }, "f").data.flags,
+    ).toHaveProperty("syrinscape-control", {
+      soundId: "42",
+      soundType: "mood",
+    });
+  });
+
+  test.each<ArtifactMetadata>([
+    { syrinscapeSoundID: 42 },
+    { syrinscapeSoundType: "Mood" },
+    { syrinscape: { soundId: "42" } },
+    { syrinscape: { soundType: "mood" } },
+  ])("reports an incomplete pair explicitly: %j", (metadata) => {
+    expect(() => mapArtifactToFoundry({ ...sound, metadata }, "f")).toThrow(
+      "sound ID and sound type must be supplied together",
+    );
+  });
+
+  test.each<ArtifactMetadata>([
+    { syrinscape: {} },
+    { syrinscape: { future: true } },
+  ])(
+    "does not map an object containing neither supported field: %j",
+    (metadata) => {
+      expect(
+        mapArtifactToFoundry({ ...sound, metadata }, "f").data.flags,
+      ).not.toHaveProperty("syrinscape-control");
+    },
+  );
   test("reports supported audio metadata on the wrong document kind", () => {
     const artifact = dac18SampleConfig.artifacts[0];
     if (!artifact) throw new Error("Missing sample artifact");

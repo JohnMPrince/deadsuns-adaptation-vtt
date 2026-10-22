@@ -19,10 +19,12 @@ external availability.
 
 Playlist sounds accept `syrinscapeSoundID` / `syrinscapeSoundType`, or
 `syrinscape: { soundId, soundType }`. IDs accept nonblank strings or positive
-safe integers. Types accept `Element`, `Mood`, `element`, or `mood`. Either
-field may be omitted for partial configuration. Matching aliases are allowed;
-conflicting aliases, malformed values, and supported keys on other artifact
-kinds are errors. Unknown keys inside the nested object are ignored.
+safe integers. Types accept `Element`, `Mood`, `element`, or `mood`. A complete
+ID/type pair is required when either field is supplied; neither field means
+ordinary audio. A complete pair may combine flat and nested keys. Matching
+aliases are allowed; conflicting aliases, malformed values, and supported keys
+on other artifact kinds are errors. Unknown keys inside the nested object are
+ignored.
 
 ## Re-imports
 

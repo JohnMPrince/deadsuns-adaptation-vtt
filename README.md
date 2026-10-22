@@ -157,10 +157,10 @@ actor/journal relationships are inferred from row proximity.
 Alternatively, JSON metadata can use
 `{"syrinscape":{"soundId":"123456","soundType":"element"}}`. IDs accept nonblank
 strings or positive safe integers; types accept `Element`/`Mood` or their
-lowercase forms. Either field may be omitted. Conflicting flat/nested values and
-supported Syrinscape keys on other artifact kinds are import errors. Unsupported
-metadata keys are ignored by mapping. All mappings are checked before writes
-begin.
+lowercase forms. Supply both ID and type, or neither for ordinary audio. A pair
+may combine flat and nested keys. Conflicting flat/nested values and supported
+Syrinscape keys on other artifact kinds are import errors. Unsupported metadata
+keys are ignored by mapping. All mappings are checked before writes begin.
 
 Artifacts created by DAC-28 support metadata-only re-import updates, reported
 through the new `updated` result count. Removing mapped metadata clears the
