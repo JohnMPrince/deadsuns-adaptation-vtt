@@ -26,11 +26,25 @@ For example, a Journal Page may store:
 }
 ```
 
+DAC-28 adds two provenance flags under `deadsuns-adaptation-vtt`:
+
+- `importedStructureFingerprint`: source content and placement fingerprint used
+  to restrict re-import updates to metadata changes.
+- `importedSyrinscapeFields`: Controller flag keys managed by the importer on
+  playlist sounds, used to clear removed mappings without clearing unmanaged
+  keys.
+
+Playlist sounds also receive supported integration fields under
+`flags["syrinscape-control"]`: `soundId` as a string and `soundType` as
+`element` or `mood`. See ADR 0009 for the inspected installed integration and
+mapping rules. `importedFingerprint` advances after successful metadata updates
+as well as creation.
+
 The gateway preserves other scopes and existing keys in this module's scope when
 adding the journal source. The current gateway reports the stored source
 fingerprint as the document fingerprint too; it does not detect manual edits to
-Foundry document content. Update/conflict plans are rejected by the
-creation-only importer.
+Foundry document content. Metadata-only update plans with a matching structural
+baseline are supported. Content changes and conflict plans are rejected.
 
 ## Foundry fields and importer-only fields
 

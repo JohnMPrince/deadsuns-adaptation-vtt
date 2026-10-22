@@ -1,4 +1,12 @@
-# DAC-25 fixtures
+# Test fixtures
+
+`sample-adaptation-config.ts` exports `sampleAdaptationConfig` for general
+import, asset mapping and gateway tests. It clones the public demo configuration
+to reuse representative content without sharing object identity. Tests
+specifically covering the DAC-18 demo continue to use `dac18SampleConfig`
+directly; the public demo API retains its existing name.
+
+## DAC-25 ingestion fixtures
 
 `taxonomy-ownership.tsv` contains the journal/page subset supplied during DAC-25
 design review. Its eight pages exercise exact Index ownership and the unique

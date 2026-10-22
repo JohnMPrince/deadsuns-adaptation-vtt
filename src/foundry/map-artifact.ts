@@ -1,6 +1,7 @@
 import type { AdaptationArtifactDefinition } from "../domain/model.ts";
 import type { ContainerCategory } from "../import/container-hierarchy.ts";
 import { parseTaxonomyId } from "../domain/taxonomy-id.ts";
+import { mapSyrinscapeMetadata } from "./map-metadata.ts";
 
 export type FoundryDocumentName =
   "Actor" | "Item" | "Scene" | "JournalEntry" | "Playlist";
@@ -21,6 +22,7 @@ export function mapArtifactToFoundry(
   artifact: AdaptationArtifactDefinition,
   fingerprint: string,
 ): MappedFoundryArtifact {
+  const syrinscape = mapSyrinscapeMetadata(artifact);
   // DAC-23 preserves order and open roles; each supported slot uses its first match.
   const asset = (role: string) =>
     artifact.assets?.find((reference) => reference.role === role)?.path;
@@ -34,6 +36,7 @@ export function mapArtifactToFoundry(
   const common = {
     name: artifact.name,
     flags: {
+      ...(syrinscape ? { "syrinscape-control": syrinscape } : {}),
       "deadsuns-adaptation-vtt": {
         taxonomyId: artifact.taxonomyId,
         importedFingerprint: fingerprint,

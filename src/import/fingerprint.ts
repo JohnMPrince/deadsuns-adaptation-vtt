@@ -1,5 +1,18 @@
 import type { AdaptationArtifactDefinition } from "../domain/model.ts";
 
+/** Metadata updates must not silently change content, ownership or placement. */
+export function fingerprintArtifactStructure(
+  artifact: AdaptationArtifactDefinition,
+): Promise<string> {
+  return fingerprintArtifact({
+    ...artifact,
+    metadata:
+      typeof artifact.metadata?.containerPath === "string"
+        ? { containerPath: artifact.metadata.containerPath }
+        : {},
+  });
+}
+
 export async function fingerprintArtifact(
   artifact: AdaptationArtifactDefinition,
 ): Promise<string> {

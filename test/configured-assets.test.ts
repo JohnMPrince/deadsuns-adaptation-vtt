@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { dac18SampleConfig } from "../src/config/dac-18-sample.ts";
+import { sampleAdaptationConfig } from "./fixtures/sample-adaptation-config.ts";
 import {
   taxonomyId,
   type AdaptationArtifactDefinition,
@@ -9,7 +9,7 @@ import { mapArtifactToFoundry } from "../src/foundry/map-artifact.ts";
 function sample(
   kind: AdaptationArtifactDefinition["kind"],
 ): AdaptationArtifactDefinition {
-  const artifact = dac18SampleConfig.artifacts.find(
+  const artifact = sampleAdaptationConfig.artifacts.find(
     (entry) => entry.kind === kind,
   );
   if (!artifact) throw new Error(`Missing sample ${kind}`);

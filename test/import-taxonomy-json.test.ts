@@ -90,7 +90,7 @@ test("imports DAC-25 output, skips repeats, and rejects changed content", async 
   };
   await expect(
     importTaxonomyJson(JSON.stringify(changed), host),
-  ).rejects.toThrow("initial creation");
+  ).rejects.toThrow("only metadata updates");
   expect(host.createArtifact).toHaveBeenCalledTimes(1);
 });
 test("preserves runtime errors and resumes partial imports", async () => {

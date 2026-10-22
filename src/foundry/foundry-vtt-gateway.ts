@@ -35,6 +35,7 @@ interface FoundryDocument {
   readonly flags?: Readonly<Record<string, unknown>>;
   readonly pages?: Iterable<FoundryDocument>;
   readonly sounds?: Iterable<FoundryDocument>;
+  update?(data: Readonly<Record<string, unknown>>): Promise<unknown>;
   createEmbeddedDocuments(
     embeddedName: string,
     data: readonly Readonly<Record<string, unknown>>[],
@@ -48,6 +49,11 @@ interface FoundryDocumentClass {
 }
 
 export interface FoundryVttRuntime {
+  readonly foundry?: {
+    readonly data: {
+      readonly operators: { readonly ForcedDeletion: new () => object };
+    };
+  };
   readonly game: {
     readonly actors: Iterable<FoundryDocument>;
     readonly items: Iterable<FoundryDocument>;
@@ -170,6 +176,64 @@ export class FoundryVttGateway implements FoundryImportGateway {
     this.artifacts.set(artifact.taxonomyId, document);
   }
 
+  public async updateArtifactMetadata(
+    artifact: MappedFoundryArtifact,
+  ): Promise<void> {
+    const document = this.artifacts.get(artifact.taxonomyId);
+    if (!document?.update)
+      throw new Error(`Cannot update metadata for ${artifact.taxonomyId}.`);
+    const flags = artifact.data.flags as Readonly<
+      Record<string, Readonly<Record<string, unknown>>>
+    >;
+    const changes: Record<string, unknown> = {};
+    const deletion = (): object => {
+      const ForcedDeletion =
+        this.runtime.foundry?.data.operators.ForcedDeletion;
+      if (!ForcedDeletion)
+        throw new Error("Foundry v14 ForcedDeletion operator is unavailable.");
+      return new ForcedDeletion();
+    };
+    // Dotted updates preserve unrelated flags and all native document content.
+    for (const key of [
+      "importedFingerprint",
+      "importedStructureFingerprint",
+      "importedSyrinscapeFields",
+      "syrinscapeSoundID",
+      "syrinscapeSoundType",
+    ]) {
+      const value = flags[scope]?.[key];
+      if (value !== undefined) changes[`flags.${scope}.${key}`] = value;
+      else if (moduleFlags(document)?.[key] !== undefined)
+        changes[`flags.${scope}.${key}`] = deletion();
+    }
+    if (artifact.documentName === "PlaylistSound") {
+      const current = document.flags?.["syrinscape-control"] as
+        Readonly<Record<string, unknown>> | undefined;
+      for (const key of ["soundId", "soundType"]) {
+        const value = flags["syrinscape-control"]?.[key];
+        if (value !== undefined)
+          changes[`flags.syrinscape-control.${key}`] = value;
+        else if (
+          current?.[key] !== undefined &&
+          Array.isArray(moduleFlags(document)?.importedSyrinscapeFields) &&
+          (
+            moduleFlags(document)?.importedSyrinscapeFields as unknown[]
+          ).includes(key)
+        )
+          changes[`flags.syrinscape-control.${key}`] = deletion();
+      }
+    }
+    try {
+      const updated = await document.update(changes);
+      if (!updated) throw new Error("Foundry returned no updated document.");
+    } catch (error) {
+      throw new Error(
+        `Unable to update metadata for ${artifact.taxonomyId}: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
+      );
+    }
+  }
+
   private record(
     document: FoundryDocument,
     states: ExistingArtifactState[],
@@ -186,7 +250,13 @@ export class FoundryVttGateway implements FoundryImportGateway {
       taxonomyId,
       foundryUuid: document.uuid,
       importedFingerprint: flags.importedFingerprint,
-      // DAC-18 only distinguishes new and previously imported sample content.
+      // Compare this saved content/placement baseline with the desired structure
+      // to allow metadata-only updates. Older imports may lack the baseline.
+      ...(typeof flags.importedStructureFingerprint === "string"
+        ? { importedStructureFingerprint: flags.importedStructureFingerprint }
+        : {}),
+      // Reuse the last source fingerprint for repeat-import planning; this gateway
+      // does not hash live document content and therefore cannot detect manual edits.
       documentFingerprint: flags.importedFingerprint,
     });
   }
