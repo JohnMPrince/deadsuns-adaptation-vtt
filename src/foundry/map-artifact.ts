@@ -1,5 +1,5 @@
 import type { AdaptationArtifactDefinition } from "../domain/model.ts";
-import type { ContainerCategory } from "../domain/container-hierarchy.ts";
+import type { ContainerCategory } from "../import/container-hierarchy.ts";
 import { parseTaxonomyId } from "../domain/taxonomy-id.ts";
 
 export type FoundryDocumentName =
@@ -24,6 +24,10 @@ export function mapArtifactToFoundry(
   // DAC-23 preserves order and open roles; each supported slot uses its first match.
   const asset = (role: string) =>
     artifact.assets?.find((reference) => reference.role === role)?.path;
+  const containerPath =
+    typeof artifact.metadata?.containerPath === "string"
+      ? artifact.metadata.containerPath
+      : undefined;
   const portrait = asset("portrait");
   const token = asset("token");
   const background = asset("background");
@@ -58,7 +62,7 @@ export function mapArtifactToFoundry(
           ...(token ? { prototypeToken: { texture: { src: token } } } : {}),
         },
         undefined,
-        artifact.metadata?.containerPath,
+        containerPath,
       );
     case "scene":
       return mapped(
@@ -79,7 +83,7 @@ export function mapArtifactToFoundry(
             : {}),
         },
         undefined,
-        artifact.metadata?.containerPath,
+        containerPath,
       );
     case "journal":
       return mapped(
@@ -87,7 +91,7 @@ export function mapArtifactToFoundry(
         "JournalEntry",
         common,
         undefined,
-        artifact.metadata?.containerPath,
+        containerPath,
       );
     case "journalPage": {
       // Importer-only source path; the gateway loads it before page creation.
@@ -103,7 +107,7 @@ export function mapArtifactToFoundry(
             text: { content: artifact.markdown, format: 1 },
           },
           artifact.journal.taxonomyId,
-          artifact.metadata?.containerPath,
+          containerPath,
         ),
         ...(contentSource ? { journalContentSource: contentSource } : {}),
       };
@@ -114,7 +118,7 @@ export function mapArtifactToFoundry(
         "Playlist",
         common,
         undefined,
-        artifact.metadata?.containerPath,
+        containerPath,
       );
     case "playlistSound":
       return mapped(
@@ -122,7 +126,7 @@ export function mapArtifactToFoundry(
         "PlaylistSound",
         { ...common, path: asset("audio") ?? artifact.source },
         artifact.playlist.taxonomyId,
-        artifact.metadata?.containerPath,
+        containerPath,
       );
     case "item":
       return mapped(
@@ -135,7 +139,7 @@ export function mapArtifactToFoundry(
           ...(portrait ? { img: portrait } : {}),
         },
         undefined,
-        artifact.metadata?.containerPath,
+        containerPath,
       );
     default:
       throw new Error(

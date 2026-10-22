@@ -1,7 +1,7 @@
 import {
   resolveContainerHierarchy,
   type ResolvedContainer,
-} from "../domain/container-hierarchy.ts";
+} from "../import/container-hierarchy.ts";
 import type { AdaptationConfig } from "../domain/model.ts";
 import {
   planImport,

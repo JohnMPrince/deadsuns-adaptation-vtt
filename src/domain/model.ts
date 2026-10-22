@@ -21,16 +21,8 @@ export type MetadataValue =
   | readonly MetadataValue[]
   | { readonly [key: string]: MetadataValue };
 
-export interface ArtifactMetadata {
-  readonly [key: string]: MetadataValue | undefined;
-  /** Slash-separated logical path, scoped to the artifact category. */
-  readonly containerPath?: string;
-  readonly chapter?: string;
-  readonly part?: string;
-  /** Optional Syrinscape identifiers for playlist sounds. */
-  readonly syrinscapeSoundID?: number;
-  readonly syrinscapeSoundType?: "Element" | "Mood";
-}
+/** Opaque JSON configuration interpreted by consumers outside the domain. */
+export type ArtifactMetadata = Readonly<Record<string, MetadataValue>>;
 
 interface ArtifactDefinition<K extends ArtifactKind, C extends ArtifactCode> {
   readonly kind: K;

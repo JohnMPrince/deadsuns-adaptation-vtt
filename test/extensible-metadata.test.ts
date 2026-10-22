@@ -48,6 +48,77 @@ const composition: ArtifactMetadata = {
 };
 
 describe("extensible artifact metadata", () => {
+  const config = (metadata?: unknown) => ({
+    ...options,
+    artifacts: [
+      {
+        kind: "actor",
+        taxonomyId: "DS-NPC-01.01.02.00",
+        name: "Actor",
+        ...(metadata === undefined ? {} : { metadata }),
+      },
+    ],
+  });
+  test.each([undefined, {}, { nested: [null, false, 0, "", { values: [] }] }])(
+    "preserves optional and nested metadata through construction and JSON: %j",
+    (metadata) => {
+      const input = config(metadata);
+      const before = JSON.stringify(input);
+      const result = parseAdaptationConfig(input);
+      expect(result.success).toBe(true);
+      if (!result.success) throw new Error("Expected valid metadata.");
+      expect(result.config).toBe(input);
+      expect(JSON.stringify(result.config)).toBe(before);
+      expect(parseAdaptationConfigJson(before)).toEqual({
+        success: true,
+        config: input,
+      });
+      expect(Object.hasOwn(result.config.artifacts[0] ?? {}, "metadata")).toBe(
+        metadata !== undefined,
+      );
+    },
+  );
+  test("treats formerly reserved keys as opaque JSON in the domain", () => {
+    const input = config({
+      chapter: 7,
+      part: false,
+      containerPath: { arbitrary: true },
+      dataset: "Initial",
+      syrinscapeSoundID: -1,
+      syrinscapeSoundType: ["future"],
+    });
+    expect(parseAdaptationConfigJson(JSON.stringify(input))).toEqual({
+      success: true,
+      config: input,
+    });
+  });
+  test.each([[], [1], null, 1, "text", true])(
+    "rejects non-object metadata: %j",
+    (metadata) => {
+      expect(parseAdaptationConfig(config(metadata))).toMatchObject({
+        success: false,
+        issues: [{ path: "artifacts[0].metadata" }],
+      });
+      expect(
+        parseAdaptationConfigJson(JSON.stringify(config(metadata))),
+      ).toMatchObject({ success: false, stage: "structure" });
+    },
+  );
+  test.each(["containerPath", "chapter", "part", "custom"])(
+    "rejects undefined values uniformly: %s",
+    (key) => {
+      expect(parseAdaptationConfig(config({ [key]: undefined }))).toMatchObject(
+        { success: false, issues: [{ path: `artifacts[0].metadata.${key}` }] },
+      );
+    },
+  );
+  test("rejects malformed JSON within metadata at the syntax boundary", () => {
+    expect(
+      parseAdaptationConfigJson(
+        '{"campaign":"DS","title":"Example","artifacts":[{"metadata":{"x":}}]}',
+      ),
+    ).toMatchObject({ success: false, stage: "syntax" });
+  });
   test.each(["BAT", "NPC", "JRN", "ITM"])(
     "retains unknown nested metadata on %s",
     (code) => {
@@ -120,8 +191,6 @@ describe("extensible artifact metadata", () => {
     ).toBe(true);
   });
   test.each([
-    '{"chapter":7}',
-    '{"dataset":"Initial"}',
     "walls: [invalid]",
     "walls: [1,2",
     "notes: 'unfinished",

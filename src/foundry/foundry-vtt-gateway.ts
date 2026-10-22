@@ -1,7 +1,7 @@
 import type {
   ContainerCategory,
   ResolvedContainer,
-} from "../domain/container-hierarchy.ts";
+} from "../import/container-hierarchy.ts";
 import type { TaxonomyId } from "../domain/taxonomy-id.ts";
 import type { ExistingArtifactState } from "../import/plan-import.ts";
 import type { FoundryImportGateway } from "./import-config.ts";

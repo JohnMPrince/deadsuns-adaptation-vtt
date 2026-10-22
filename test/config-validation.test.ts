@@ -101,7 +101,7 @@ describe("adaptation configuration validation", () => {
           name: "Scene",
           actors: [null, { taxonomyId: 42 }],
           tags: ["valid", false],
-          metadata: { chapter: 1 },
+          metadata: { chapter: undefined },
         },
         {
           kind: "journalPage",
@@ -154,7 +154,7 @@ describe("adaptation configuration validation", () => {
     expect(result).toEqual({ success: true, config: input });
   });
 
-  test("rejects source dataset filters as artifact metadata", () => {
+  test("preserves dataset as opaque artifact metadata", () => {
     const result = parseAdaptationConfig({
       campaign: "DS",
       title: "Example",
@@ -168,15 +168,9 @@ describe("adaptation configuration validation", () => {
       ],
     });
 
-    expect(result).toEqual({
-      success: false,
-      issues: [
-        {
-          path: "artifacts[0].metadata.dataset",
-          message:
-            "Dataset is a source-ingestion filter and is not part of artifact metadata.",
-        },
-      ],
+    expect(result).toMatchObject({
+      success: true,
+      config: { artifacts: [{ metadata: { dataset: "Initial" } }] },
     });
   });
 });

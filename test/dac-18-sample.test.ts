@@ -8,7 +8,7 @@ import {
   type FoundryImportGateway,
 } from "../src/foundry/import-config.ts";
 import type { MappedFoundryArtifact } from "../src/foundry/map-artifact.ts";
-import type { ResolvedContainer } from "../src/domain/container-hierarchy.ts";
+import type { ResolvedContainer } from "../src/import/container-hierarchy.ts";
 import type { ExistingArtifactState } from "../src/import/plan-import.ts";
 
 describe("DAC-18 Docking Bay sample import", () => {

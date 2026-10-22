@@ -53,7 +53,7 @@ describe("Syrinscape sound metadata", () => {
     },
   );
   test.each(["element", "mood", "Music", "Element ", "", null, 123])(
-    "rejects invalid sound type in import JSON: %j",
+    "preserves arbitrary sound type in import JSON: %j",
     (type) => {
       const valid = parseTaxonomySheet(
         input("syrinscapeSoundType: Element"),
@@ -73,13 +73,13 @@ describe("Syrinscape sound metadata", () => {
           JSON.stringify({ ...valid.config, artifacts }),
         ),
       ).toMatchObject({
-        success: false,
-        issues: [
-          {
-            path: "artifacts[1].metadata.syrinscapeSoundType",
-            message: 'Expected "Element" or "Mood".',
-          },
-        ],
+        success: true,
+        config: {
+          artifacts: [
+            expect.anything(),
+            { metadata: { syrinscapeSoundType: type } },
+          ],
+        },
       });
     },
   );
@@ -113,20 +113,10 @@ describe("Syrinscape sound metadata", () => {
     },
   );
   test.each([
-    "syrinscapeSoundID: TBA",
-    "syrinscapeSoundID: -1",
-    "syrinscapeSoundID: 0",
-    "syrinscapeSoundID: 1.5",
-    "syrinscapeSoundID: 9007199254740992",
-    "syrinscapeSoundType: ''",
-    "syrinscapeSoundType: Music",
-    "syrinscapeSoundType: element",
-    '{"syrinscapeSoundID":"123456"}',
-    '{"syrinscapeSoundType":123}',
     "syrinscapeSoundID: 1\nsyrinscapeSoundID: 2",
     "not metadata",
     "{invalid}",
-  ])("rejects malformed or invalid known metadata: %s", (metadata) => {
+  ])("rejects malformed metadata: %s", (metadata) => {
     const result = parseTaxonomySheet(input(metadata), options);
     expect(result.success).toBe(false);
     if (result.success) throw new Error("Expected invalid metadata.");
@@ -135,7 +125,7 @@ describe("Syrinscape sound metadata", () => {
     ).toBe(true);
     expect(result).not.toHaveProperty("json");
   });
-  test("rejects Syrinscape fields on a journal", () => {
+  test("preserves Syrinscape fields on a journal", () => {
     const result = parseAdaptationConfigJson(
       JSON.stringify({
         ...options,
@@ -149,7 +139,7 @@ describe("Syrinscape sound metadata", () => {
         ],
       }),
     );
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
   test("metadata changes affect the source fingerprint", async () => {
     const result = parseTaxonomySheet(

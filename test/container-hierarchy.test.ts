@@ -1,10 +1,12 @@
-import { describe, expect, test } from "vitest";
-import { deadSunsContainerPaths } from "../src/config/dead-suns-containers.ts";
 import {
   parseContainerPath,
   resolveContainerHierarchy,
+  validateContainers,
+} from "../src/import/container-hierarchy.ts";
+import { describe, expect, test } from "vitest";
+import { deadSunsContainerPaths } from "../src/config/dead-suns-containers.ts";
+import {
   taxonomyId,
-  validateConfig,
   type AdaptationConfig,
   type AdaptationArtifactDefinition,
 } from "../src/domain/index.ts";
@@ -47,7 +49,7 @@ describe("category-scoped path hierarchy", () => {
   test("derives arbitrary parents in parent-first order without mutation", () => {
     const input = config(scene("Campaign/Chapter/Part/Area/Room"));
     const before = structuredClone(input);
-    expect(validateConfig(input)).toEqual([]);
+    expect(validateContainers(input)).toEqual([]);
     const hierarchy = resolveContainerHierarchy(input);
     expect(hierarchy.map((container) => container.path)).toEqual([
       "Campaign",
@@ -92,7 +94,7 @@ describe("category-scoped path hierarchy", () => {
         metadata: { containerPath: "Campaign" },
       },
     );
-    expect(validateConfig(input)).toEqual([]);
+    expect(validateContainers(input)).toEqual([]);
     expect(resolveContainerHierarchy(input)).toHaveLength(2);
   });
   test("separates Scene and Playlist trees at identical paths", () => {
@@ -187,7 +189,7 @@ describe("category-scoped path hierarchy", () => {
     "Root/Bad\u007fName",
   ])("rejects invalid path %j before import", async (path) => {
     const input = config(scene(path));
-    expect(validateConfig(input)).toEqual([
+    expect(validateContainers(input)).toEqual([
       expect.objectContaining({ path: "artifacts[0].metadata.containerPath" }),
     ]);
     expect(() => parseContainerPath(path)).toThrow();
@@ -251,11 +253,11 @@ describe("category-scoped path hierarchy", () => {
           ...child,
           ...(metadata ? { metadata } : {}),
         });
-        expect(validateConfig(input)).toEqual([]);
+        expect(validateContainers(input)).toEqual([]);
         expect(resolveContainerHierarchy(input)).toHaveLength(2);
       }
       expect(
-        validateConfig(
+        validateContainers(
           config(parent, { ...child, metadata: { containerPath: "Other" } }),
         ),
       ).toEqual([

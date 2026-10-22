@@ -36,13 +36,4 @@ export type { AdaptationConfigParseResult } from "./parse-config.ts";
 export { parseAdaptationConfigJson } from "./parse-serialized-config.ts";
 export type { AdaptationConfigJsonParseResult } from "./parse-serialized-config.ts";
 export type { ValidationIssue } from "./validation-issue.ts";
-export {
-  parseContainerPath,
-  resolveContainerHierarchy,
-} from "./container-hierarchy.ts";
-export type {
-  ContainerCategory,
-  ResolvedContainer,
-} from "./container-hierarchy.ts";
-
 export { parseAssetReferences } from "./parse-asset-references.ts";
