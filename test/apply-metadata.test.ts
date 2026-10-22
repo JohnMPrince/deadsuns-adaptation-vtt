@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
-import { dac18SampleConfig } from "../src/config/dac-18-sample.ts";
+import { sampleAdaptationConfig } from "./fixtures/sample-adaptation-config.ts";
 import type { ArtifactMetadata } from "../src/domain/model.ts";
 import { parseAdaptationConfigJson } from "../src/domain/parse-serialized-config.ts";
 import { importConfiguredAssets } from "../src/foundry/import-config.ts";
 import { mapArtifactToFoundry } from "../src/foundry/map-artifact.ts";
 
-const sound = dac18SampleConfig.artifacts.find(
+const sound = sampleAdaptationConfig.artifacts.find(
   (artifact) => artifact.kind === "playlistSound",
 );
 if (!sound) throw new Error("Missing sample sound");
@@ -52,8 +52,8 @@ describe("DAC-28 metadata mapping", () => {
     "reports invalid supported metadata before writes: %j",
     async (metadata) => {
       const config = {
-        ...dac18SampleConfig,
-        artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+        ...sampleAdaptationConfig,
+        artifacts: sampleAdaptationConfig.artifacts.map((artifact) =>
           artifact.taxonomyId === sound.taxonomyId
             ? { ...artifact, metadata }
             : artifact,
@@ -138,7 +138,7 @@ describe("DAC-28 metadata mapping", () => {
     },
   );
   test("reports supported audio metadata on the wrong document kind", () => {
-    const artifact = dac18SampleConfig.artifacts[0];
+    const artifact = sampleAdaptationConfig.artifacts[0];
     if (!artifact) throw new Error("Missing sample artifact");
     expect(() =>
       mapArtifactToFoundry(

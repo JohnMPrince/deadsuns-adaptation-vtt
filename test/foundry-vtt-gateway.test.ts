@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 
-import { dac18SampleConfig } from "../src/config/dac-18-sample.ts";
+import { sampleAdaptationConfig } from "./fixtures/sample-adaptation-config.ts";
 import {
   FoundryVttGateway,
   type FoundryVttRuntime,
@@ -14,7 +14,7 @@ describe("Foundry VTT gateway", () => {
   test("unknown metadata preserves manual Controller settings and unrelated flags", async () => {
     const runtime = fakeRuntime();
     const gateway = new FoundryVttGateway(runtime);
-    await importConfiguredAssets(dac18SampleConfig, gateway);
+    await importConfiguredAssets(sampleAdaptationConfig, gateway);
     const track = [...([...runtime.game.playlists][0]?.sounds ?? [])][0];
     if (!track?.update) throw new Error("Missing track");
     await track.update({
@@ -23,8 +23,8 @@ describe("Foundry VTT gateway", () => {
       "flags.deadsuns-adaptation-vtt.custom": 1,
     });
     const changed = {
-      ...dac18SampleConfig,
-      artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+      ...sampleAdaptationConfig,
+      artifacts: sampleAdaptationConfig.artifacts.map((artifact) =>
         artifact.kind === "playlistSound"
           ? {
               ...artifact,
@@ -44,7 +44,7 @@ describe("Foundry VTT gateway", () => {
   test("legacy imports remain unchanged but cannot accept unsafe metadata updates", async () => {
     const runtime = fakeRuntime();
     const gateway = new FoundryVttGateway(runtime);
-    await importConfiguredAssets(dac18SampleConfig, gateway);
+    await importConfiguredAssets(sampleAdaptationConfig, gateway);
     for (const playlist of runtime.game.playlists) {
       for (const track of playlist.sounds ?? [])
         await track.update?.({
@@ -53,11 +53,11 @@ describe("Foundry VTT gateway", () => {
         });
     }
     expect(
-      (await importConfiguredAssets(dac18SampleConfig, gateway)).unchanged,
+      (await importConfiguredAssets(sampleAdaptationConfig, gateway)).unchanged,
     ).toBe(16);
     const changed = {
-      ...dac18SampleConfig,
-      artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+      ...sampleAdaptationConfig,
+      artifacts: sampleAdaptationConfig.artifacts.map((artifact) =>
         artifact.kind === "playlistSound"
           ? {
               ...artifact,
@@ -78,8 +78,8 @@ describe("Foundry VTT gateway", () => {
   test("updates metadata, clears removed owned fields, and skips identical re-imports", async () => {
     const runtime = fakeRuntime();
     const config = {
-      ...dac18SampleConfig,
-      artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+      ...sampleAdaptationConfig,
+      artifacts: sampleAdaptationConfig.artifacts.map((artifact) =>
         artifact.kind === "playlistSound"
           ? {
               ...artifact,
@@ -125,7 +125,7 @@ describe("Foundry VTT gateway", () => {
     ).toMatchObject({ created: 0, updated: 0, unchanged: 16 });
     expect(update).toHaveBeenCalledTimes(1);
     expect(
-      (await importConfiguredAssets(dac18SampleConfig, gateway)).updated,
+      (await importConfiguredAssets(sampleAdaptationConfig, gateway)).updated,
     ).toBe(4);
     expect(track.flags?.["syrinscape-control"]).toEqual({});
     expect([...([...runtime.game.playlists][0]?.sounds ?? [])]).toHaveLength(4);
@@ -134,7 +134,7 @@ describe("Foundry VTT gateway", () => {
   test("reports failed metadata updates and resumes without redoing successful tracks", async () => {
     const runtime = fakeRuntime();
     const gateway = new FoundryVttGateway(runtime);
-    await importConfiguredAssets(dac18SampleConfig, gateway);
+    await importConfiguredAssets(sampleAdaptationConfig, gateway);
     const tracks = [...([...runtime.game.playlists][0]?.sounds ?? [])];
     const track = tracks[1];
     if (!track) throw new Error("Missing track");
@@ -142,8 +142,8 @@ describe("Foundry VTT gateway", () => {
       .spyOn(track, "update")
       .mockRejectedValueOnce(new Error("Update failed"));
     const changed = {
-      ...dac18SampleConfig,
-      artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+      ...sampleAdaptationConfig,
+      artifacts: sampleAdaptationConfig.artifacts.map((artifact) =>
         artifact.kind === "playlistSound"
           ? {
               ...artifact,
@@ -172,8 +172,8 @@ describe("Foundry VTT gateway", () => {
       .fn<(path: string) => Promise<string | undefined>>()
       .mockResolvedValue(undefined);
     const config = {
-      ...dac18SampleConfig,
-      artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+      ...sampleAdaptationConfig,
+      artifacts: sampleAdaptationConfig.artifacts.map((artifact) =>
         artifact.kind === "journalPage"
           ? { ...artifact, assets: [{ role: "content", path: "missing.md" }] }
           : artifact,
@@ -215,8 +215,8 @@ describe("Foundry VTT gateway", () => {
       .mockResolvedValue("");
     const gateway = new FoundryVttGateway(runtime, loader);
     const config = {
-      ...dac18SampleConfig,
-      artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+      ...sampleAdaptationConfig,
+      artifacts: sampleAdaptationConfig.artifacts.map((artifact) =>
         artifact.kind === "journalPage"
           ? { ...artifact, assets: [{ role: "content", path: "page.md" }] }
           : artifact,
@@ -267,9 +267,9 @@ describe("Foundry VTT gateway", () => {
       .mockResolvedValue("# Loaded Markdown");
     const gateway = new FoundryVttGateway(runtime, loader);
     const config = {
-      ...dac18SampleConfig,
+      ...sampleAdaptationConfig,
       artifacts: [
-        ...dac18SampleConfig.artifacts.map((artifact) => ({
+        ...sampleAdaptationConfig.artifacts.map((artifact) => ({
           ...artifact,
           assets: [
             { role: "background", path: "missing.webp" },
@@ -348,7 +348,7 @@ describe("Foundry VTT gateway", () => {
     const gateway = new FoundryVttGateway(runtime);
 
     expect(
-      (await importConfiguredAssets(dac18SampleConfig, gateway)).created,
+      (await importConfiguredAssets(sampleAdaptationConfig, gateway)).created,
     ).toBe(16);
     expect([...runtime.game.actors]).toHaveLength(3);
     expect([...runtime.game.scenes]).toHaveLength(1);
@@ -366,7 +366,10 @@ describe("Foundry VTT gateway", () => {
       ]),
     ).toHaveLength(4);
 
-    const repeat = await importConfiguredAssets(dac18SampleConfig, gateway);
+    const repeat = await importConfiguredAssets(
+      sampleAdaptationConfig,
+      gateway,
+    );
     expect(repeat.created).toBe(0);
     expect(repeat.unchanged).toBe(16);
   });
