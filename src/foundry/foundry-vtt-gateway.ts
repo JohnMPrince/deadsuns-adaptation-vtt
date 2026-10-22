@@ -250,10 +250,13 @@ export class FoundryVttGateway implements FoundryImportGateway {
       taxonomyId,
       foundryUuid: document.uuid,
       importedFingerprint: flags.importedFingerprint,
+      // Compare this saved content/placement baseline with the desired structure
+      // to allow metadata-only updates. Older imports may lack the baseline.
       ...(typeof flags.importedStructureFingerprint === "string"
         ? { importedStructureFingerprint: flags.importedStructureFingerprint }
         : {}),
-      // DAC-18 only distinguishes new and previously imported sample content.
+      // Reuse the last source fingerprint for repeat-import planning; this gateway
+      // does not hash live document content and therefore cannot detect manual edits.
       documentFingerprint: flags.importedFingerprint,
     });
   }
