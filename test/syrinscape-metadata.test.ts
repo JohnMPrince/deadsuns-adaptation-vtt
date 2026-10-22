@@ -103,6 +103,7 @@ describe("Syrinscape sound metadata", () => {
         syrinscapeSoundType: "Element",
       });
       expect(mapArtifactToFoundry(sound, "example").data.flags).toEqual({
+        "syrinscape-control": { soundId: "123456", soundType: "element" },
         "deadsuns-adaptation-vtt": {
           taxonomyId: "DS-AUD-08.15.02.02",
           importedFingerprint: "example",

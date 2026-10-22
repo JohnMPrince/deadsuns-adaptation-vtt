@@ -11,6 +11,156 @@ import { taxonomyId } from "../src/domain/index.ts";
 import { planImport } from "../src/import/plan-import.ts";
 
 describe("Foundry VTT gateway", () => {
+  test("unknown metadata preserves manual Controller settings and unrelated flags", async () => {
+    const runtime = fakeRuntime();
+    const gateway = new FoundryVttGateway(runtime);
+    await importConfiguredAssets(dac18SampleConfig, gateway);
+    const track = [...([...runtime.game.playlists][0]?.sounds ?? [])][0];
+    if (!track?.update) throw new Error("Missing track");
+    await track.update({
+      "flags.syrinscape-control.soundId": "manual",
+      "flags.other.keep": true,
+      "flags.deadsuns-adaptation-vtt.custom": 1,
+    });
+    const changed = {
+      ...dac18SampleConfig,
+      artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+        artifact.kind === "playlistSound"
+          ? {
+              ...artifact,
+              metadata: { ...artifact.metadata, unknown: { enabled: true } },
+            }
+          : artifact,
+      ),
+    };
+    expect((await importConfiguredAssets(changed, gateway)).updated).toBe(4);
+    expect(track.flags).toMatchObject({
+      "syrinscape-control": { soundId: "manual" },
+      other: { keep: true },
+      "deadsuns-adaptation-vtt": { custom: 1 },
+    });
+  });
+
+  test("legacy imports remain unchanged but cannot accept unsafe metadata updates", async () => {
+    const runtime = fakeRuntime();
+    const gateway = new FoundryVttGateway(runtime);
+    await importConfiguredAssets(dac18SampleConfig, gateway);
+    for (const playlist of runtime.game.playlists) {
+      for (const track of playlist.sounds ?? [])
+        await track.update?.({
+          "flags.deadsuns-adaptation-vtt.-=importedStructureFingerprint": null,
+        });
+    }
+    expect(
+      (await importConfiguredAssets(dac18SampleConfig, gateway)).unchanged,
+    ).toBe(16);
+    const changed = {
+      ...dac18SampleConfig,
+      artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+        artifact.kind === "playlistSound"
+          ? {
+              ...artifact,
+              metadata: { ...artifact.metadata, syrinscapeSoundID: 42 },
+            }
+          : artifact,
+      ),
+    };
+    await expect(importConfiguredAssets(changed, gateway)).rejects.toThrow(
+      "recorded structure fingerprint",
+    );
+  });
+
+  test("updates metadata, clears removed owned fields, and skips identical re-imports", async () => {
+    const runtime = fakeRuntime();
+    const config = {
+      ...dac18SampleConfig,
+      artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+        artifact.kind === "playlistSound"
+          ? {
+              ...artifact,
+              metadata: {
+                ...artifact.metadata,
+                syrinscape: { soundId: "42", soundType: "element" },
+              },
+            }
+          : artifact,
+      ),
+    };
+    await importConfiguredAssets(config, new FoundryVttGateway(runtime));
+    const track = [...([...runtime.game.playlists][0]?.sounds ?? [])][0];
+    if (!track) throw new Error("Missing track");
+    const update = vi.spyOn(track, "update");
+    const changed = {
+      ...config,
+      artifacts: config.artifacts.map((artifact) =>
+        artifact.kind === "playlistSound"
+          ? {
+              ...artifact,
+              metadata: {
+                ...artifact.metadata,
+                syrinscape: { soundId: "43", soundType: "mood" },
+              },
+            }
+          : artifact,
+      ),
+    };
+    const gateway = new FoundryVttGateway(runtime);
+    expect(await importConfiguredAssets(changed, gateway)).toMatchObject({
+      created: 0,
+      updated: 4,
+      unchanged: 12,
+    });
+    expect(track.flags?.["syrinscape-control"]).toEqual({
+      soundId: "43",
+      soundType: "mood",
+    });
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(
+      await importConfiguredAssets(changed, new FoundryVttGateway(runtime)),
+    ).toMatchObject({ created: 0, updated: 0, unchanged: 16 });
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(
+      (await importConfiguredAssets(dac18SampleConfig, gateway)).updated,
+    ).toBe(4);
+    expect(track.flags?.["syrinscape-control"]).toEqual({});
+    expect([...([...runtime.game.playlists][0]?.sounds ?? [])]).toHaveLength(4);
+  });
+
+  test("reports failed metadata updates and resumes without redoing successful tracks", async () => {
+    const runtime = fakeRuntime();
+    const gateway = new FoundryVttGateway(runtime);
+    await importConfiguredAssets(dac18SampleConfig, gateway);
+    const tracks = [...([...runtime.game.playlists][0]?.sounds ?? [])];
+    const track = tracks[1];
+    if (!track) throw new Error("Missing track");
+    const update = vi
+      .spyOn(track, "update")
+      .mockRejectedValueOnce(new Error("Update failed"));
+    const changed = {
+      ...dac18SampleConfig,
+      artifacts: dac18SampleConfig.artifacts.map((artifact) =>
+        artifact.kind === "playlistSound"
+          ? {
+              ...artifact,
+              metadata: {
+                ...artifact.metadata,
+                syrinscapeSoundID: 42,
+                syrinscapeSoundType: "Mood",
+              },
+            }
+          : artifact,
+      ),
+    };
+    await expect(importConfiguredAssets(changed, gateway)).rejects.toThrow(
+      "Update failed",
+    );
+    expect(await importConfiguredAssets(changed, gateway)).toMatchObject({
+      updated: 3,
+      unchanged: 13,
+    });
+    expect(update).toHaveBeenCalledTimes(2);
+  });
+
   test("retains inline content and source provenance when Markdown is missing", async () => {
     const runtime = fakeRuntime();
     const loader = vi
@@ -183,7 +333,7 @@ describe("Foundry VTT gateway", () => {
         .update,
     ).toBe(1);
     await expect(importConfiguredAssets(changed, gateway)).rejects.toThrow(
-      "initial creation and unchanged repeat imports only",
+      "only metadata updates",
     );
     expect([...runtime.game.items]).toHaveLength(1);
     expect([...runtime.game.folders]).toHaveLength(folders);
@@ -218,6 +368,7 @@ describe("Foundry VTT gateway", () => {
 });
 
 interface FakeDocument {
+  update(data: Readonly<Record<string, unknown>>): Promise<FakeDocument>;
   readonly data: Readonly<Record<string, unknown>>;
   readonly id: string;
   readonly uuid: string;
@@ -252,6 +403,18 @@ function fakeRuntime(): FoundryVttRuntime {
       ...(flags ? { flags } : {}),
       ...(name === "JournalEntry" ? { pages: [] } : {}),
       ...(name === "Playlist" ? { sounds: [] } : {}),
+      update: (changes) => {
+        for (const [path, value] of Object.entries(changes)) {
+          const [, scope, key] = path.split(".");
+          if (!scope || !key) throw new Error("Expected dotted flag path");
+          const scopes = flags as Record<string, Record<string, unknown>>;
+          const target = (scopes[scope] ??= {});
+          if (key.startsWith("-="))
+            Reflect.deleteProperty(target, key.slice(2));
+          else target[key] = value;
+        }
+        return Promise.resolve(result);
+      },
       createEmbeddedDocuments: (embeddedName, rows) => {
         const created = rows.map((row) => document(embeddedName, row));
         if (embeddedName === "JournalEntryPage") result.pages?.push(...created);

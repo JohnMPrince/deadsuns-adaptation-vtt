@@ -145,12 +145,31 @@ values. For example, audio metadata can carry `syrinscapeSoundID` and
 `syrinscape sound id` and `syrinscape sound type` are also accepted. These
 fields merge with container/chapter/part metadata, survive JSON serialization,
 affect fingerprints, and are preserved in the imported track's
-`deadsuns-adaptation-vtt` flags. This stores identifiers; it does not initiate
-Syrinscape playback. Duplicate key/value entries and malformed metadata are
-errors. Metadata values for containerPath, chapter, and part must agree with any
-nonblank dedicated columns. The Dataset column is an ingestion filter; an
+`deadsuns-adaptation-vtt` flags. DAC-28 also maps these values into Syrinscape
+Controller 1.1.0's `flags["syrinscape-control"].soundId` (string) and
+`soundType` (`element` or `mood`). The Controller handles playback; the importer
+does not initiate playback. Duplicate key/value entries and malformed metadata
+are errors. Metadata values for containerPath, chapter, and part must agree with
+any nonblank dedicated columns. The Dataset column is an ingestion filter; an
 explicit metadata key named `dataset` is preserved as opaque JSON. No scene
 actor/journal relationships are inferred from row proximity.
+
+Alternatively, JSON metadata can use
+`{"syrinscape":{"soundId":"123456","soundType":"element"}}`. IDs accept nonblank
+strings or positive safe integers; types accept `Element`/`Mood` or their
+lowercase forms. Either field may be omitted. Conflicting flat/nested values and
+supported Syrinscape keys on other artifact kinds are import errors. Unsupported
+metadata keys are ignored by mapping. All mappings are checked before writes
+begin.
+
+Artifacts created by DAC-28 support metadata-only re-import updates, reported
+through the new `updated` result count. Removing mapped metadata clears the
+Controller fields previously managed by the importer. Unchanged re-imports
+perform no writes. Content and placement changes remain unsupported. Older
+imports lack the structural baseline required for safe metadata updates and must
+be recreated to enable this behavior; unchanged imports still work. See
+[ADR 0009](docs/decisions/0009-apply-artifact-metadata.md) for details and
+verification limits.
 
 For future scene composition, a Metadata cell can contain, for example:
 
@@ -331,8 +350,7 @@ work.
 Paths are passed through unchanged. Missing media does not block document
 creation, and image/audio existence checks or downloads do not run during
 import. Repeat imports create no duplicates. Changed asset references still
-produce update plans, which the creation-only importer rejects before any
-writes.
+produce update plans, which the importer rejects before any writes.
 
 See [ADR 0006](docs/decisions/0006-configured-asset-mapping.md) for field
 mappings and the decisions behind these defaults. Automated tests use a Foundry
@@ -357,15 +375,16 @@ point is exposed at module initialization and can import once the world is
 ready.
 
 Calls resolve to an explicit result. Success returns `success: true`, `created`,
-`unchanged`, `plan`, and an empty `errors` array. Failure returns
+`unchanged`, `updated`, `plan`, and an empty `errors` array. Failure returns
 `success: false`, `stage` (authorization, input, syntax, structure, semantic, or
 import), and `errors` containing paths and messages. Failure results omit counts
 because a runtime failure can leave partial results whose totals are
 unavailable. Awaiting the function in Developer Tools displays this result
 without an unhandled rejection. No logging or notifications are added.
 
-The existing creation-only engine validates and plans before writing, skips
-unchanged repeats, and rejects updates and conflicts before writes. Rerun the
-same JSON after a partial failure to create remaining artifacts while retaining
-completed ones. No file picker, browser spreadsheet parser, automatic import, or
-new update capability is introduced.
+The engine validates and plans before writing, skips unchanged repeats, and
+supports metadata-only updates for artifacts with a recorded structural baseline
+(DAC-28). Content/placement changes and conflicts are rejected before writes.
+Rerun the same JSON after a partial failure to resume remaining creations or
+metadata updates while retaining completed ones. No file picker, browser
+spreadsheet parser, or automatic import is introduced.

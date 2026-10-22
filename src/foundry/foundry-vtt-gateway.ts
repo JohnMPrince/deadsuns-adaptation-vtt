@@ -35,6 +35,7 @@ interface FoundryDocument {
   readonly flags?: Readonly<Record<string, unknown>>;
   readonly pages?: Iterable<FoundryDocument>;
   readonly sounds?: Iterable<FoundryDocument>;
+  update?(data: Readonly<Record<string, unknown>>): Promise<unknown>;
   createEmbeddedDocuments(
     embeddedName: string,
     data: readonly Readonly<Record<string, unknown>>[],
@@ -170,6 +171,57 @@ export class FoundryVttGateway implements FoundryImportGateway {
     this.artifacts.set(artifact.taxonomyId, document);
   }
 
+  public async updateArtifactMetadata(
+    artifact: MappedFoundryArtifact,
+  ): Promise<void> {
+    const document = this.artifacts.get(artifact.taxonomyId);
+    if (!document?.update)
+      throw new Error(`Cannot update metadata for ${artifact.taxonomyId}.`);
+    const flags = artifact.data.flags as Readonly<
+      Record<string, Readonly<Record<string, unknown>>>
+    >;
+    const changes: Record<string, unknown> = {};
+    // Dotted updates preserve unrelated flags and all native document content.
+    for (const key of [
+      "importedFingerprint",
+      "importedStructureFingerprint",
+      "importedSyrinscapeFields",
+      "syrinscapeSoundID",
+      "syrinscapeSoundType",
+    ]) {
+      const value = flags[scope]?.[key];
+      if (value !== undefined) changes[`flags.${scope}.${key}`] = value;
+      else if (moduleFlags(document)?.[key] !== undefined)
+        changes[`flags.${scope}.-=${key}`] = null;
+    }
+    if (artifact.documentName === "PlaylistSound") {
+      const current = document.flags?.["syrinscape-control"] as
+        Readonly<Record<string, unknown>> | undefined;
+      for (const key of ["soundId", "soundType"]) {
+        const value = flags["syrinscape-control"]?.[key];
+        if (value !== undefined)
+          changes[`flags.syrinscape-control.${key}`] = value;
+        else if (
+          current?.[key] !== undefined &&
+          Array.isArray(moduleFlags(document)?.importedSyrinscapeFields) &&
+          (
+            moduleFlags(document)?.importedSyrinscapeFields as unknown[]
+          ).includes(key)
+        )
+          changes[`flags.syrinscape-control.-=${key}`] = null;
+      }
+    }
+    try {
+      const updated = await document.update(changes);
+      if (!updated) throw new Error("Foundry returned no updated document.");
+    } catch (error) {
+      throw new Error(
+        `Unable to update metadata for ${artifact.taxonomyId}: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
+      );
+    }
+  }
+
   private record(
     document: FoundryDocument,
     states: ExistingArtifactState[],
@@ -186,6 +238,9 @@ export class FoundryVttGateway implements FoundryImportGateway {
       taxonomyId,
       foundryUuid: document.uuid,
       importedFingerprint: flags.importedFingerprint,
+      ...(typeof flags.importedStructureFingerprint === "string"
+        ? { importedStructureFingerprint: flags.importedStructureFingerprint }
+        : {}),
       // DAC-18 only distinguishes new and previously imported sample content.
       documentFingerprint: flags.importedFingerprint,
     });

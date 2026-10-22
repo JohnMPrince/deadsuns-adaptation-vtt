@@ -24,7 +24,7 @@ export class TaxonomyJsonValidationError extends Error {
   }
 }
 
-/** Import taxonomy parser JSON using the existing validation and creation-only engine. */
+/** Import taxonomy parser JSON using the existing validation and bounded import engine. */
 export async function executeTaxonomyJson(
   json: string,
   gateway?: FoundryImportGateway,

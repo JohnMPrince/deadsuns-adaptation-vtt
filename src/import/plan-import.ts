@@ -11,6 +11,7 @@ export interface ExistingArtifactState {
   readonly taxonomyId: TaxonomyId;
   readonly foundryUuid: string;
   readonly importedFingerprint?: string;
+  readonly importedStructureFingerprint?: string;
   readonly documentFingerprint: string;
 }
 
