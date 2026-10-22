@@ -34,11 +34,13 @@ conflicts still fail. The result adds an `updated` count. Unchanged re-imports
 perform no writes.
 
 Updates use dotted flag paths, preserving unrelated flags and native content.
-`importedSyrinscapeFields` records which Controller keys this importer owns, so
-removing metadata clears those keys without clearing manually supplied keys the
-importer never managed. Fingerprints and mapped flags are persisted in the same
-document update. After a partial failure, successful artifacts are unchanged on
-retry and remaining updates resume.
+Removals use Foundry v14's `foundry.data.operators.ForcedDeletion` operator,
+avoiding the deprecated `-=key` syntax. `importedSyrinscapeFields` records which
+Controller keys this importer owns, so removing metadata clears those keys
+without clearing manually supplied keys the importer never managed. Fingerprints
+and mapped flags are persisted in the same document update. After a partial
+failure, successful artifacts are unchanged on retry and remaining updates
+resume.
 
 Pre-DAC-28 documents have no structural baseline. Unchanged imports still work;
 changed imports are rejected with an explanatory error. Recreate those artifacts
@@ -47,5 +49,10 @@ manual-edit detection is introduced: the gateway still uses the recorded import
 fingerprint as its document fingerprint, as in DAC-18.
 
 Automated mapping, preflight, gateway update/removal, failure recovery and
-repeat import tests cover the contract. Live Foundry import/playback has not
-been tested for DAC-28.
+repeat import tests cover the contract. A user-run Foundry 0.5.0 smoke test
+confirmed initial creation, flat/nested Controller mapping, metadata-free audio,
+unknown metadata, unchanged repeat imports and an in-place metadata update. That
+run exposed deprecated deletion warnings (corrected to `ForcedDeletion`) and
+stopped on the smoke script's unregistered test flag scope (corrected to the
+importer's active scope). Remaining checks, including removals, preservation and
+the corrected build, require a new live run. Playback has not been verified.

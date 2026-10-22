@@ -48,7 +48,8 @@ describe("Foundry VTT gateway", () => {
     for (const playlist of runtime.game.playlists) {
       for (const track of playlist.sounds ?? [])
         await track.update?.({
-          "flags.deadsuns-adaptation-vtt.-=importedStructureFingerprint": null,
+          "flags.deadsuns-adaptation-vtt.importedStructureFingerprint":
+            new FakeForcedDeletion(),
         });
     }
     expect(
@@ -381,6 +382,10 @@ interface FakeDocument {
   ): Promise<readonly FakeDocument[]>;
 }
 
+class FakeForcedDeletion {
+  readonly operation = "delete";
+}
+
 function fakeRuntime(): FoundryVttRuntime {
   let nextId = 1;
   const actors: FakeDocument[] = [];
@@ -410,7 +415,9 @@ function fakeRuntime(): FoundryVttRuntime {
           const scopes = flags as Record<string, Record<string, unknown>>;
           const target = (scopes[scope] ??= {});
           if (key.startsWith("-="))
-            Reflect.deleteProperty(target, key.slice(2));
+            throw new Error("Deprecated deletion syntax");
+          if (value instanceof FakeForcedDeletion)
+            Reflect.deleteProperty(target, key);
           else target[key] = value;
         }
         return Promise.resolve(result);
@@ -434,6 +441,7 @@ function fakeRuntime(): FoundryVttRuntime {
   });
 
   return {
+    foundry: { data: { operators: { ForcedDeletion: FakeForcedDeletion } } },
     game: { actors, items, scenes, journal, playlists, folders },
     Actor: documentClass("Actor", actors),
     Item: documentClass("Item", items),

@@ -49,6 +49,11 @@ interface FoundryDocumentClass {
 }
 
 export interface FoundryVttRuntime {
+  readonly foundry?: {
+    readonly data: {
+      readonly operators: { readonly ForcedDeletion: new () => object };
+    };
+  };
   readonly game: {
     readonly actors: Iterable<FoundryDocument>;
     readonly items: Iterable<FoundryDocument>;
@@ -181,6 +186,13 @@ export class FoundryVttGateway implements FoundryImportGateway {
       Record<string, Readonly<Record<string, unknown>>>
     >;
     const changes: Record<string, unknown> = {};
+    const deletion = (): object => {
+      const ForcedDeletion =
+        this.runtime.foundry?.data.operators.ForcedDeletion;
+      if (!ForcedDeletion)
+        throw new Error("Foundry v14 ForcedDeletion operator is unavailable.");
+      return new ForcedDeletion();
+    };
     // Dotted updates preserve unrelated flags and all native document content.
     for (const key of [
       "importedFingerprint",
@@ -192,7 +204,7 @@ export class FoundryVttGateway implements FoundryImportGateway {
       const value = flags[scope]?.[key];
       if (value !== undefined) changes[`flags.${scope}.${key}`] = value;
       else if (moduleFlags(document)?.[key] !== undefined)
-        changes[`flags.${scope}.-=${key}`] = null;
+        changes[`flags.${scope}.${key}`] = deletion();
     }
     if (artifact.documentName === "PlaylistSound") {
       const current = document.flags?.["syrinscape-control"] as
@@ -208,7 +220,7 @@ export class FoundryVttGateway implements FoundryImportGateway {
             moduleFlags(document)?.importedSyrinscapeFields as unknown[]
           ).includes(key)
         )
-          changes[`flags.syrinscape-control.-=${key}`] = null;
+          changes[`flags.syrinscape-control.${key}`] = deletion();
       }
     }
     try {
